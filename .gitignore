@@ -62,6 +62,6 @@ htmlcov/
 *.bak
 *.backup
 
-# Generated artifacts
-docs/architecture/*.pdf
-docs/presentation/*.pdf
+# Generated artifacts (PDFs are now committed for submission)
+# docs/architecture/*.pdf
+# docs/presentation/*.pdf

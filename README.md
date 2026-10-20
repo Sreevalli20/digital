@@ -340,9 +340,9 @@ gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --threads 4
 
 **15-20 Minute Unlisted YouTube Demonstration**
 
-**Status:** Pending recording and upload
+**Status:** PENDING recording and upload
 
-**Video URL:** [To be added after upload]
+**Video URL:** [PENDING - To be added after upload]
 
 **Demo Script:** See [docs/demo/demo-script.md](docs/demo/demo-script.md)
 
@@ -358,6 +358,8 @@ The demo covers:
 
 ## Architecture Diagram
 
+**Architecture PDF:** [docs/architecture/architecture.pdf](docs/architecture/architecture.pdf)
+
 See [docs/architecture/architecture.md](docs/architecture/architecture.md) for detailed architecture documentation including:
 - High-level architecture diagram
 - Component descriptions
@@ -368,6 +370,8 @@ See [docs/architecture/architecture.md](docs/architecture/architecture.md) for d
 ---
 
 ## Presentation
+
+**Presentation PDF:** [docs/presentation/presentation.pdf](docs/presentation/presentation.pdf)
 
 Professional presentation slides covering:
 - Problem and intended users
@@ -380,8 +384,6 @@ Professional presentation slides covering:
 - Innovation highlights
 - Security and privacy
 - Deployment and future work
-
-**Status:** Pending generation (PDF/PPT format)
 
 ---
 
@@ -579,8 +581,6 @@ The following challenge submission items are present in this repository:
 **Pending External Actions:**
 - [ ] Record and upload 15-20 minute demo video to YouTube (unlisted)
 - [ ] Add actual video URL to README.md and demo-script.md
-- [ ] Generate PDF version of architecture diagram
-- [ ] Generate PDF version of presentation slides
 
 All files are publicly accessible without additional permissions once the repository is made public.
 
