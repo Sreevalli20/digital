@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Swasthya Twin - Digital Twin for Healthcare{% endblock %}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f8f9fa;
+        }
+        
+        /* Color Palette */
+        :root {
+            --primary-navy: #1a365d;
+            --primary-dark: #2c5282;
+            --accent-teal: #319795;
+            --accent-blue: #4299e1;
+            --warning-amber: #d69e2e;
+            --danger-red: #c53030;
+            --white: #ffffff;
+            --gray-50: #f7fafc;
+            --gray-100: #edf2f7;
+            --gray-200: #e2e8f0;
+            --gray-300: #cbd5e0;
+            --gray-500: #718096;
+            --gray-700: #4a5568;
+            --gray-900: #1a202c;
+        }
+        
+        /* Navigation */
+        .navbar {
+            background-color: var(--primary-navy);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: var(--white);
+            text-decoration: none;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--accent-teal), var(--accent-blue));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+        
+        .navbar-nav {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+        
+        .navbar-nav a {
+            color: var(--gray-200);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        
+        .navbar-nav a:hover {
+            color: var(--white);
+        }
+        
+        /* Container */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+        
+        /* Buttons */
+        .btn {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary {
+            background-color: var(--accent-teal);
+            color: var(--white);
+        }
+        
+        .btn-primary:hover {
+            background-color: #2c7a7b;
+        }
+        
+        .btn-secondary {
+            background-color: var(--primary-dark);
+            color: var(--white);
+        }
+        
+        .btn-secondary:hover {
+            background-color: var(--primary-navy);
+        }
+        
+        .btn-outline {
+            background-color: transparent;
+            border: 2px solid var(--accent-teal);
+            color: var(--accent-teal);
+        }
+        
+        .btn-outline:hover {
+            background-color: var(--accent-teal);
+            color: var(--white);
+        }
+        
+        /* Cards */
+        .card {
+            background: var(--white);
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .card-header {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--primary-navy);
+        }
+        
+        /* Forms */
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--gray-700);
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--gray-300);
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: var(--accent-teal);
+            box-shadow: 0 0 0 3px rgba(49, 151, 149, 0.1);
+        }
+        
+        /* Tables */
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .table th,
+        .table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--gray-200);
+        }
+        
+        .table th {
+            background-color: var(--gray-50);
+            font-weight: 600;
+            color: var(--gray-700);
+        }
+        
+        /* Alerts */
+        .alert {
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+        }
+        
+        .alert-info {
+            background-color: #ebf8ff;
+            border-left: 4px solid var(--accent-blue);
+            color: var(--primary-dark);
+        }
+        
+        .alert-warning {
+            background-color: #fffaf0;
+            border-left: 4px solid var(--warning-amber);
+            color: #975a16;
+        }
+        
+        .alert-danger {
+            background-color: #fff5f5;
+            border-left: 4px solid var(--danger-red);
+            color: #9b2c2c;
+        }
+        
+        /* Footer */
+        .footer {
+            background-color: var(--gray-900);
+            color: var(--gray-300);
+            padding: 2rem;
+            margin-top: 3rem;
+        }
+        
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .navbar {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .navbar-nav {
+                gap: 1rem;
+            }
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <nav class="navbar">
+        <a href="/" class="navbar-brand">
+            <div class="logo-icon">ST</div>
+            Swasthya Twin
+        </a>
+        <ul class="navbar-nav">
+            <li><a href="/">Home</a></li>
+            <li><a href="/demo">Demo</a></li>
+        </ul>
+    </nav>
+    
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+    
+    <footer class="footer">
+        <div class="footer-content">
+            <p>&copy; 2026 Swasthya Twin - Brain Catalyst Team</p>
+            <p style="margin-top: 0.5rem; font-size: 0.875rem;">
+                Happiest Health Digital Twin Challenge 2026
+            </p>
+        </div>
+    </footer>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

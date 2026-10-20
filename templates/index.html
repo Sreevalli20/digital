@@ -1,0 +1,378 @@
+{% extends "base.html" %}
+
+{% block title %}Swasthya Twin - Digital Twin for Healthcare{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero {
+        background: linear-gradient(135deg, var(--primary-navy) 0%, var(--primary-dark) 100%);
+        color: var(--white);
+        padding: 4rem 2rem;
+        text-align: center;
+    }
+    
+    .hero h1 {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+    
+    .hero .tagline {
+        font-size: 1.5rem;
+        color: var(--gray-200);
+        margin-bottom: 2rem;
+    }
+    
+    .hero .description {
+        max-width: 800px;
+        margin: 0 auto 2rem;
+        font-size: 1.125rem;
+        line-height: 1.8;
+        color: var(--gray-100);
+    }
+    
+    .hero-cta {
+        margin-top: 2rem;
+    }
+    
+    .section {
+        padding: 4rem 2rem;
+    }
+    
+    .section-title {
+        text-align: center;
+        font-size: 2rem;
+        color: var(--primary-navy);
+        margin-bottom: 1rem;
+    }
+    
+    .section-subtitle {
+        text-align: center;
+        color: var(--gray-500);
+        margin-bottom: 3rem;
+        max-width: 800px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    .features-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+        margin-top: 2rem;
+    }
+    
+    .feature-card {
+        background: var(--white);
+        padding: 2rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        transition: transform 0.2s;
+    }
+    
+    .feature-card:hover {
+        transform: translateY(-4px);
+    }
+    
+    .feature-icon {
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, var(--accent-teal), var(--accent-blue));
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .feature-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--primary-navy);
+        margin-bottom: 0.5rem;
+    }
+    
+    .feature-description {
+        color: var(--gray-700);
+        line-height: 1.6;
+    }
+    
+    .problem-section {
+        background-color: var(--gray-50);
+    }
+    
+    .problem-content {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+    
+    .problem-title {
+        font-size: 1.5rem;
+        color: var(--primary-navy);
+        margin-bottom: 1rem;
+    }
+    
+    .problem-text {
+        color: var(--gray-700);
+        line-height: 1.8;
+        margin-bottom: 1.5rem;
+    }
+    
+    .architecture-section {
+        background-color: var(--white);
+    }
+    
+    .architecture-diagram {
+        max-width: 900px;
+        margin: 0 auto;
+        background: var(--gray-50);
+        padding: 2rem;
+        border-radius: 8px;
+    }
+    
+    .architecture-step {
+        display: flex;
+        align-items: center;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        background: var(--white);
+        border-radius: 6px;
+        border-left: 4px solid var(--accent-teal);
+    }
+    
+    .architecture-step-number {
+        width: 40px;
+        height: 40px;
+        background: var(--accent-teal);
+        color: var(--white);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        margin-right: 1rem;
+        flex-shrink: 0;
+    }
+    
+    .architecture-step-text {
+        color: var(--gray-700);
+    }
+    
+    .disclaimer {
+        background-color: #fffaf0;
+        border: 1px solid var(--warning-amber);
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin: 2rem auto;
+        max-width: 900px;
+    }
+    
+    .disclaimer-title {
+        color: #975a16;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+    
+    .disclaimer-text {
+        color: var(--gray-700);
+        font-size: 0.9rem;
+        line-height: 1.6;
+    }
+    
+    .team-section {
+        background-color: var(--gray-50);
+        text-align: center;
+    }
+    
+    .team-info {
+        max-width: 600px;
+        margin: 0 auto;
+    }
+    
+    .team-name {
+        font-size: 1.5rem;
+        color: var(--primary-navy);
+        margin-bottom: 0.5rem;
+    }
+    
+    .team-details {
+        color: var(--gray-700);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <div class="container">
+        <h1>Swasthya Twin</h1>
+        <p class="tagline">Understand the change. Explore the possibilities. Act earlier.</p>
+        <p class="description">
+            An explainable, adaptive patient Digital Twin that maintains a structured representation 
+            of an individual's baseline health, physiological measurements, and longitudinal trends. 
+            Simulate hypothetical interventions and understand how changes affect health outcomes.
+        </p>
+        <div class="hero-cta">
+            <a href="/demo" class="btn btn-primary">Try Interactive Demo</a>
+        </div>
+    </div>
+</section>
+
+<section class="section">
+    <div class="container">
+        <h2 class="section-title">Key Capabilities</h2>
+        <p class="section-subtitle">
+            Swasthya Twin provides a comprehensive framework for personalized health monitoring and scenario simulation.
+        </p>
+        
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">📊</div>
+                <h3 class="feature-title">Baseline Establishment</h3>
+                <p class="feature-description">
+                    Establish individual health baselines from available observations and track changes over time with personalized metrics.
+                </p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">📈</div>
+                <h3 class="feature-title">Longitudinal Monitoring</h3>
+                <p class="feature-description">
+                    Track health trends across time windows with rolling averages, change detection, and data quality indicators.
+                </p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">🎯</div>
+                <h3 class="feature-title">Risk Assessment</h3>
+                <p class="feature-description">
+                    Explainable cardiometabolic risk estimation with feature contributions, confidence scores, and clear limitations.
+                </p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">🔮</div>
+                <h3 class="feature-title">Scenario Simulation</h3>
+                <p class="feature-description">
+                    Simulate hypothetical changes to health variables and compare outcomes without modifying historical data.
+                </p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">📥</div>
+                <h3 class="feature-title">Data Ingestion</h3>
+                <p class="feature-description">
+                    Import observations via CSV upload with validation, duplicate detection, and provenance tracking.
+                </p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">🔍</div>
+                <h3 class="feature-title">Evidence Transparency</h3>
+                <p class="feature-description">
+                    Traceable evidence chain from observations to model outputs with reproducible calculations and exports.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section problem-section">
+    <div class="container">
+        <h2 class="section-title">Problem Statement</h2>
+        <div class="problem-content">
+            <p class="problem-text">
+                Healthcare decisions often rely on single-point measurements or population averages that may not reflect 
+                an individual's unique health trajectory. Patients and clinicians lack tools to understand how personal 
+                baselines evolve over time and how hypothetical interventions might affect health outcomes.
+            </p>
+            <p class="problem-text">
+                Swasthya Twin addresses this by creating a patient-specific virtual health model that maintains 
+                longitudinal observations, computes personalized risk assessments, and enables evidence-based 
+                scenario exploration—all with transparent explanations and clear uncertainty communication.
+            </p>
+        </div>
+    </div>
+</section>
+
+<section class="section architecture-section">
+    <div class="container">
+        <h2 class="section-title">System Architecture</h2>
+        <p class="section-subtitle">
+            A modular, evidence-oriented architecture for reliable Digital Twin computation.
+        </p>
+        
+        <div class="architecture-diagram">
+            <div class="architecture-step">
+                <div class="architecture-step-number">1</div>
+                <div class="architecture-step-text">
+                    <strong>Data Ingestion:</strong> Manual entry, CSV import, or synthetic data generation with validation and provenance tracking
+                </div>
+            </div>
+            
+            <div class="architecture-step">
+                <div class="architecture-step-number">2</div>
+                <div class="architecture-step-text">
+                    <strong>Persistence Layer:</strong> SQLite database with patient profiles, observations, scenarios, and provenance ledger
+                </div>
+            </div>
+            
+            <div class="architecture-step">
+                <div class="architecture-step-number">3</div>
+                <div class="architecture-step-text">
+                    <strong>Digital Twin Engine:</strong> Computes baseline values, trends, rolling averages, and data quality metrics
+                </div>
+            </div>
+            
+            <div class="architecture-step">
+                <div class="architecture-step-number">4</div>
+                <div class="architecture-step-text">
+                    <strong>Prediction Engine:</strong> Rules-based risk assessment with explainable feature contributions
+                </div>
+            </div>
+            
+            <div class="architecture-step">
+                <div class="architecture-step-number">5</div>
+                <div class="architecture-step-text">
+                    <strong>Scenario Engine:</strong> Hypothetical simulation with modified features and outcome comparison
+                </div>
+            </div>
+            
+            <div class="architecture-step">
+                <div class="architecture-step-number">6</div>
+                <div class="architecture-step-text">
+                    <strong>Evidence Export:</strong> FHIR-compatible mappings, summary reports, and downloadable evidence bundles
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section">
+    <div class="container">
+        <div class="disclaimer">
+            <h3 class="disclaimer-title">⚠️ Research & Safety Disclaimer</h3>
+            <p class="disclaimer-text">
+                Swasthya Twin is a research prototype and demonstration software. It is NOT a clinical diagnostic tool, 
+                does NOT provide medical advice, and has NOT been validated for clinical use. Risk assessments are 
+                based on rules-based screening of available observations and should not be used for medical decision-making. 
+                Always consult qualified healthcare professionals for health-related decisions. This system demonstrates 
+                Digital Twin concepts for educational and research purposes only.
+            </p>
+        </div>
+    </div>
+</section>
+
+<section class="section team-section">
+    <div class="container">
+        <h2 class="section-title">Team Information</h2>
+        <div class="team-info">
+            <p class="team-name">Brain Catalyst</p>
+            <p class="team-details">
+                <strong>Team Member:</strong> Kommavarapu Kameswari Sreevalli<br>
+                <strong>College:</strong> VMTW<br>
+                <strong>Competition:</strong> Happiest Health Digital Twin Challenge 2026
+            </p>
+        </div>
+    </div>
+</section>
+{% endblock %}

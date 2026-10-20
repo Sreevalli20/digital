@@ -1,0 +1,864 @@
+{% extends "base.html" %}
+
+{% block title %}Swasthya Twin - Interactive Demo{% endblock %}
+
+{% block extra_css %}
+<style>
+    .demo-container {
+        padding: 2rem;
+    }
+    
+    .demo-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+    
+    .demo-title {
+        font-size: 2rem;
+        color: var(--primary-navy);
+    }
+    
+    .demo-actions {
+        display: flex;
+        gap: 1rem;
+    }
+    
+    .patient-selector {
+        margin-bottom: 2rem;
+    }
+    
+    .patient-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+    
+    .patient-card {
+        background: var(--white);
+        border: 2px solid var(--gray-200);
+        border-radius: 8px;
+        padding: 1.5rem;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .patient-card:hover {
+        border-color: var(--accent-teal);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    .patient-card.active {
+        border-color: var(--accent-teal);
+        background-color: #f0fff4;
+    }
+    
+    .patient-card-name {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--primary-navy);
+        margin-bottom: 0.5rem;
+    }
+    
+    .patient-card-meta {
+        color: var(--gray-500);
+        font-size: 0.875rem;
+    }
+    
+    .patient-card-badge {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        background-color: var(--accent-blue);
+        color: var(--white);
+        border-radius: 4px;
+        font-size: 0.75rem;
+        margin-top: 0.5rem;
+    }
+    
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        margin-top: 2rem;
+    }
+    
+    .dashboard-full {
+        grid-column: 1 / -1;
+    }
+    
+    .metric-card {
+        background: var(--white);
+        border-radius: 8px;
+        padding: 1.5rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .metric-label {
+        font-size: 0.875rem;
+        color: var(--gray-500);
+        margin-bottom: 0.5rem;
+    }
+    
+    .metric-value {
+        font-size: 2rem;
+        font-weight: 600;
+        color: var(--primary-navy);
+    }
+    
+    .metric-change {
+        font-size: 0.875rem;
+        margin-top: 0.5rem;
+    }
+    
+    .metric-change.positive {
+        color: #c53030;
+    }
+    
+    .metric-change.negative {
+        color: #2f855a;
+    }
+    
+    .risk-badge {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 1rem;
+    }
+    
+    .risk-badge.low {
+        background-color: #c6f6d5;
+        color: #22543d;
+    }
+    
+    .risk-badge.moderate {
+        background-color: #fefcbf;
+        color: #744210;
+    }
+    
+    .risk-badge.high {
+        background-color: #fed7d7;
+        color: #822727;
+    }
+    
+    .risk-badge.unknown {
+        background-color: var(--gray-200);
+        color: var(--gray-700);
+    }
+    
+    .tabs {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 2px solid var(--gray-200);
+    }
+    
+    .tab {
+        padding: 0.75rem 1.5rem;
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 1rem;
+        color: var(--gray-500);
+        border-bottom: 2px solid transparent;
+        margin-bottom: -2px;
+    }
+    
+    .tab:hover {
+        color: var(--primary-navy);
+    }
+    
+    .tab.active {
+        color: var(--primary-navy);
+        border-bottom-color: var(--accent-teal);
+    }
+    
+    .tab-content {
+        display: none;
+    }
+    
+    .tab-content.active {
+        display: block;
+    }
+    
+    .observation-form {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        align-items: end;
+    }
+    
+    .scenario-form {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1rem;
+    }
+    
+    .loading {
+        text-align: center;
+        padding: 2rem;
+        color: var(--gray-500);
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: var(--gray-500);
+    }
+    
+    .feature-list {
+        list-style: none;
+    }
+    
+    .feature-item {
+        padding: 1rem;
+        border-bottom: 1px solid var(--gray-200);
+    }
+    
+    .feature-item:last-child {
+        border-bottom: none;
+    }
+    
+    .feature-name {
+        font-weight: 600;
+        color: var(--primary-navy);
+    }
+    
+    .feature-contribution {
+        color: var(--gray-700);
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+    }
+    
+    @media (max-width: 768px) {
+        .dashboard-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .demo-header {
+            flex-direction: column;
+            gap: 1rem;
+            text-align: center;
+        }
+        
+        .demo-actions {
+            flex-direction: column;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="demo-container">
+    <div class="demo-header">
+        <h1 class="demo-title">Patient Workspace</h1>
+        <div class="demo-actions">
+            <button class="btn btn-outline" onclick="generateSyntheticPatient()">Generate Synthetic Patient</button>
+            <button class="btn btn-primary" onclick="showCreatePatientModal()">Create Patient</button>
+        </div>
+    </div>
+    
+    <div class="patient-selector">
+        <h2 style="color: var(--primary-navy); margin-bottom: 1rem;">Select Patient</h2>
+        <div id="patientGrid" class="patient-grid">
+            <div class="loading">Loading patients...</div>
+        </div>
+    </div>
+    
+    <div id="patientDashboard" style="display: none;">
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('overview')">Overview</button>
+            <button class="tab" onclick="switchTab('observations')">Observations</button>
+            <button class="tab" onclick="switchTab('risk')">Risk Assessment</button>
+            <button class="tab" onclick="switchTab('scenarios')">Scenarios</button>
+            <button class="tab" onclick="switchTab('export')">Export</button>
+        </div>
+        
+        <div id="tab-overview" class="tab-content active">
+            <div class="dashboard-grid">
+                <div class="metric-card dashboard-full">
+                    <h3 style="color: var(--primary-navy); margin-bottom: 1rem;">Patient Summary</h3>
+                    <div id="patientSummary"></div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-label">Overall Data Quality</div>
+                    <div class="metric-value" id="dataQuality">-</div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-label">Total Observations</div>
+                    <div class="metric-value" id="totalObservations">-</div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-label">Data Freshness</div>
+                    <div class="metric-value" id="dataFreshness">-</div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-label">Completeness Score</div>
+                    <div class="metric-value" id="completenessScore">-</div>
+                </div>
+            </div>
+            
+            <div class="card" style="margin-top: 1.5rem;">
+                <h3 style="color: var(--primary-navy); margin-bottom: 1rem;">Feature States</h3>
+                <div id="featureStates"></div>
+            </div>
+        </div>
+        
+        <div id="tab-observations" class="tab-content">
+            <div class="card">
+                <h3 style="color: var(--primary-navy); margin-bottom: 1rem;">Add Observation</h3>
+                <form id="observationForm" class="observation-form" onsubmit="addObservation(event)">
+                    <div class="form-group">
+                        <label class="form-label">Type</label>
+                        <select class="form-control" id="obsType" required>
+                            <option value="">Select type...</option>
+                            <option value="heart_rate">Heart Rate (bpm)</option>
+                            <option value="systolic_bp">Systolic BP (mmHg)</option>
+                            <option value="diastolic_bp">Diastolic BP (mmHg)</option>
+                            <option value="bmi">BMI (kg/m²)</option>
+                            <option value="glucose">Glucose (mg/dL)</option>
+                            <option value="activity_minutes">Activity (minutes)</option>
+                            <option value="sleep_hours">Sleep (hours)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Value</label>
+                        <input type="number" step="0.1" class="form-control" id="obsValue" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Timestamp</label>
+                        <input type="datetime-local" class="form-control" id="obsTimestamp">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Notes</label>
+                        <input type="text" class="form-control" id="obsNotes">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add Observation</button>
+                </form>
+            </div>
+            
+            <div class="card" style="margin-top: 1.5rem;">
+                <h3 style="color: var(--primary-navy); margin-bottom: 1rem;">CSV Upload</h3>
+                <input type="file" id="csvFile" accept=".csv" style="margin-bottom: 1rem;">
+                <button class="btn btn-secondary" onclick="uploadCSV()">Upload CSV</button>
+                <a href="/api/csv/example" class="btn btn-outline" style="margin-left: 1rem;">Download Example</a>
+            </div>
+            
+            <div class="card" style="margin-top: 1.5rem;">
+                <h3 style="color: var(--primary-navy); margin-bottom: 1rem;">Recent Observations</h3>
+                <div id="observationsList"></div>
+            </div>
+        </div>
+        
+        <div id="tab-risk" class="tab-content">
+            <div class="card">
+                <h3 style="color: var(--primary-navy); margin-bottom: 1rem;">Risk Assessment</h3>
+                <div id="riskAssessment"></div>
+            </div>
+        </div>
+        
+        <div id="tab-scenarios" class="tab-content">
+            <div class="card">
+                <h3 style="color: var(--primary-navy); margin-bottom: 1rem;">Create Scenario</h3>
+                <form id="scenarioForm" class="scenario-form" onsubmit="createScenario(event)">
+                    <div class="form-group">
+                        <label class="form-label">Scenario Name</label>
+                        <input type="text" class="form-control" id="scenarioName" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Description</label>
+                        <input type="text" class="form-control" id="scenarioDescription">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Feature to Modify</label>
+                        <select class="form-control" id="scenarioFeature" required onchange="updateScenarioUnit()">
+                            <option value="">Select feature...</option>
+                            <option value="heart_rate">Heart Rate</option>
+                            <option value="systolic_bp">Systolic BP</option>
+                            <option value="diastolic_bp">Diastolic BP</option>
+                            <option value="bmi">BMI</option>
+                            <option value="glucose">Glucose</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">New Value (<span id="scenarioUnit">-</span>)</label>
+                        <input type="number" step="0.1" class="form-control" id="scenarioValue" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Create & Run Scenario</button>
+                </form>
+            </div>
+            
+            <div class="card" style="margin-top: 1.5rem;">
+                <h3 style="color: var(--primary-navy); margin-bottom: 1rem;">Scenario Results</h3>
+                <div id="scenariosList"></div>
+            </div>
+        </div>
+        
+        <div id="tab-export" class="tab-content">
+            <div class="card">
+                <h3 style="color: var(--primary-navy); margin-bottom: 1rem;">Export Patient Data</h3>
+                <p style="color: var(--gray-700); margin-bottom: 1.5rem;">
+                    Download patient data, Digital Twin state, risk assessment, and observations as evidence bundles.
+                </p>
+                <div style="display: flex; gap: 1rem;">
+                    <button class="btn btn-primary" onclick="exportData('json')">Export as JSON</button>
+                    <button class="btn btn-secondary" onclick="exportData('csv')">Export Observations (CSV)</button>
+                    <button class="btn btn-outline" onclick="exportData('report')">Export Summary Report</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentPatientId = null;
+let currentPatient = null;
+
+// Load patients on page load
+document.addEventListener('DOMContentLoaded', loadPatients);
+
+async function loadPatients() {
+    try {
+        const response = await fetch('/api/patients');
+        const patients = await response.json();
+        
+        const grid = document.getElementById('patientGrid');
+        
+        if (patients.length === 0) {
+            grid.innerHTML = '<div class="empty-state">No patients found. Create a patient to get started.</div>';
+            return;
+        }
+        
+        grid.innerHTML = patients.map(p => `
+            <div class="patient-card" onclick="selectPatient(${p.id})" data-id="${p.id}">
+                <div class="patient-card-name">${p.full_name || 'Unknown'}</div>
+                <div class="patient-card-meta">
+                    ID: ${p.id}<br>
+                    Age: ${p.age || 'Unknown'}<br>
+                    Gender: ${p.gender || 'Unknown'}
+                </div>
+                ${p.is_synthetic ? '<span class="patient-card-badge">Synthetic</span>' : ''}
+            </div>
+        `).join('');
+    } catch (error) {
+        console.error('Error loading patients:', error);
+        document.getElementById('patientGrid').innerHTML = '<div class="alert alert-danger">Error loading patients</div>';
+    }
+}
+
+async function selectPatient(patientId) {
+    currentPatientId = patientId;
+    
+    // Update UI
+    document.querySelectorAll('.patient-card').forEach(card => {
+        card.classList.remove('active');
+        if (parseInt(card.dataset.id) === patientId) {
+            card.classList.add('active');
+        }
+    });
+    
+    // Show dashboard
+    document.getElementById('patientDashboard').style.display = 'block';
+    
+    // Load patient data
+    await loadPatientData();
+}
+
+async function loadPatientData() {
+    if (!currentPatientId) return;
+    
+    try {
+        // Load patient details
+        const patientResponse = await fetch(`/api/patients/${currentPatientId}`);
+        currentPatient = await patientResponse.json();
+        
+        // Load twin state
+        const stateResponse = await fetch(`/api/patients/${currentPatientId}/twin-state`);
+        const state = await stateResponse.json();
+        
+        // Load risk assessment
+        const riskResponse = await fetch(`/api/patients/${currentPatientId}/risk`);
+        const risk = await riskResponse.json();
+        
+        // Load observations
+        const obsResponse = await fetch(`/api/patients/${currentPatientId}/observations`);
+        const observations = await obsResponse.json();
+        
+        // Update UI
+        updatePatientSummary(currentPatient);
+        updateMetrics(state);
+        updateFeatureStates(state);
+        updateRiskAssessment(risk);
+        updateObservationsList(observations);
+        loadScenarios();
+        
+    } catch (error) {
+        console.error('Error loading patient data:', error);
+    }
+}
+
+function updatePatientSummary(patient) {
+    document.getElementById('patientSummary').innerHTML = `
+        <p><strong>Name:</strong> ${patient.full_name || 'Unknown'}</p>
+        <p><strong>Patient ID:</strong> ${patient.id}</p>
+        <p><strong>Age:</strong> ${patient.age || 'Unknown'}</p>
+        <p><strong>Gender:</strong> ${patient.gender || 'Unknown'}</p>
+        <p><strong>Data Source:</strong> ${patient.is_synthetic ? 'Synthetic' : 'Real'}</p>
+    `;
+}
+
+function updateMetrics(state) {
+    document.getElementById('dataQuality').textContent = state.overall_data_quality.toUpperCase();
+    document.getElementById('totalObservations').textContent = state.total_observations;
+    document.getElementById('dataFreshness').textContent = state.data_freshness_days !== null ? 
+        `${state.data_freshness_days} days ago` : 'Unknown';
+    document.getElementById('completenessScore').textContent = 
+        `${(state.completeness_score * 100).toFixed(0)}%`;
+}
+
+function updateFeatureStates(state) {
+    const container = document.getElementById('featureStates');
+    
+    if (!state.features || Object.keys(state.features).length === 0) {
+        container.innerHTML = '<div class="empty-state">No feature data available</div>';
+        return;
+    }
+    
+    container.innerHTML = Object.entries(state.features).map(([name, feature]) => `
+        <div class="feature-item">
+            <div class="feature-name">${name.replace(/_/g, ' ').toUpperCase()}</div>
+            <div style="margin-top: 0.5rem;">
+                <span style="color: var(--gray-700);">Current: </span>
+                <strong>${feature.current_value !== null ? feature.current_value.toFixed(1) : 'N/A'}</strong>
+                <span style="color: var(--gray-500); margin-left: 1rem;">Baseline: ${feature.baseline_value !== null ? feature.baseline_value.toFixed(1) : 'N/A'}</span>
+            </div>
+            ${feature.change_from_baseline !== null ? `
+                <div class="metric-change ${feature.change_from_baseline > 0 ? 'positive' : 'negative'}">
+                    Change: ${feature.change_from_baseline > 0 ? '+' : ''}${feature.change_from_baseline.toFixed(1)} 
+                    (${feature.percent_change > 0 ? '+' : ''}${feature.percent_change.toFixed(1)}%)
+                </div>
+            ` : ''}
+            <div style="font-size: 0.875rem; color: var(--gray-500); margin-top: 0.25rem;">
+                Trend: ${feature.trend || 'Unknown'} | Quality: ${feature.data_quality} | Observations: ${feature.observation_count}
+            </div>
+        </div>
+    `).join('');
+}
+
+function updateRiskAssessment(risk) {
+    const container = document.getElementById('riskAssessment');
+    
+    if (risk.is_insufficient_data) {
+        container.innerHTML = `
+            <div class="alert alert-warning">
+                <strong>Insufficient Data</strong><br>
+                ${risk.insufficient_data_reason}
+            </div>
+        `;
+        return;
+    }
+    
+    const riskClass = risk.risk_level || 'unknown';
+    
+    container.innerHTML = `
+        <div style="margin-bottom: 1.5rem;">
+            <span class="risk-badge ${riskClass}">${risk.risk_level ? risk.risk_level.toUpperCase() : 'UNKNOWN'}</span>
+            <div style="margin-top: 0.5rem; font-size: 1.25rem; color: var(--primary-navy);">
+                Risk Score: ${risk.risk_score !== null ? (risk.risk_score * 100).toFixed(1) + '%' : 'N/A'}
+            </div>
+            <div style="color: var(--gray-500); margin-top: 0.25rem;">
+                Confidence: ${risk.confidence !== null ? (risk.confidence * 100).toFixed(0) + '%' : 'N/A'}
+            </div>
+        </div>
+        
+        <h4 style="color: var(--primary-navy); margin-bottom: 1rem;">Feature Contributions</h4>
+        <ul class="feature-list">
+            ${risk.feature_contributions.map(fc => `
+                <li class="feature-item">
+                    <div class="feature-name">${fc.feature_name.replace(/_/g, ' ').toUpperCase()}</div>
+                    <div class="feature-contribution">${fc.explanation}</div>
+                    <div style="font-size: 0.875rem; color: var(--gray-500); margin-top: 0.25rem;">
+                        Contribution: ${(fc.contribution_value * 100).toFixed(1)}% | Direction: ${fc.direction}
+                    </div>
+                </li>
+            `).join('')}
+        </ul>
+        
+        <div style="margin-top: 1.5rem;">
+            <h4 style="color: var(--primary-navy); margin-bottom: 0.5rem;">Limitations</h4>
+            <ul style="color: var(--gray-700); font-size: 0.875rem;">
+                ${risk.limitations.map(l => `<li>${l}</li>`).join('')}
+            </ul>
+        </div>
+    `;
+}
+
+function updateObservationsList(observations) {
+    const container = document.getElementById('observationsList');
+    
+    if (!observations || observations.length === 0) {
+        container.innerHTML = '<div class="empty-state">No observations recorded</div>';
+        return;
+    }
+    
+    container.innerHTML = `
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Type</th>
+                    <th>Value</th>
+                    <th>Unit</th>
+                    <th>Timestamp</th>
+                    <th>Source</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${observations.slice(0, 20).map(obs => `
+                    <tr>
+                        <td>${obs.observation_type.replace(/_/g, ' ')}</td>
+                        <td>${obs.value !== null ? obs.value : 'N/A'}</td>
+                        <td>${obs.unit}</td>
+                        <td>${new Date(obs.timestamp).toLocaleString()}</td>
+                        <td>${obs.is_synthetic ? 'Synthetic' : 'Real'}</td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+        ${observations.length > 20 ? `<p style="color: var(--gray-500); margin-top: 1rem;">Showing 20 of ${observations.length} observations</p>` : ''}
+    `;
+}
+
+async function addObservation(event) {
+    event.preventDefault();
+    
+    const data = {
+        patient_id: currentPatientId,
+        observation_type: document.getElementById('obsType').value,
+        value: parseFloat(document.getElementById('obsValue').value),
+        unit: getUnitForType(document.getElementById('obsType').value),
+        timestamp: document.getElementById('obsTimestamp').value || null,
+        notes: document.getElementById('obsNotes').value
+    };
+    
+    try {
+        const response = await fetch('/api/observations', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        
+        if (response.ok) {
+            alert('Observation added successfully');
+            document.getElementById('observationForm').reset();
+            loadPatientData();
+        } else {
+            const error = await response.json();
+            alert('Error: ' + (error.error || 'Failed to add observation'));
+        }
+    } catch (error) {
+        console.error('Error adding observation:', error);
+        alert('Error adding observation');
+    }
+}
+
+async function uploadCSV() {
+    const fileInput = document.getElementById('csvFile');
+    const file = fileInput.files[0];
+    
+    if (!file) {
+        alert('Please select a CSV file');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('patient_id', currentPatientId);
+    
+    try {
+        const response = await fetch('/api/upload/csv', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+            alert(result.message);
+            fileInput.value = '';
+            loadPatientData();
+        } else {
+            alert('Error: ' + (result.error || result.errors?.join(', ') || 'Failed to upload CSV'));
+        }
+    } catch (error) {
+        console.error('Error uploading CSV:', error);
+        alert('Error uploading CSV');
+    }
+}
+
+async function createScenario(event) {
+    event.preventDefault();
+    
+    const data = {
+        patient_id: currentPatientId,
+        name: document.getElementById('scenarioName').value,
+        description: document.getElementById('scenarioDescription').value,
+        modifications: [{
+            feature_name: document.getElementById('scenarioFeature').value,
+            modified_value: parseFloat(document.getElementById('scenarioValue').value),
+            unit: getUnitForType(document.getElementById('scenarioFeature').value)
+        }]
+    };
+    
+    try {
+        const response = await fetch('/api/scenarios', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        
+        if (response.ok) {
+            const scenario = await response.json();
+            
+            // Run the scenario
+            const runResponse = await fetch(`/api/scenarios/${scenario.id}/run`, {
+                method: 'POST'
+            });
+            
+            if (runResponse.ok) {
+                alert('Scenario created and executed successfully');
+                document.getElementById('scenarioForm').reset();
+                loadScenarios();
+            } else {
+                alert('Error running scenario');
+            }
+        } else {
+            const error = await response.json();
+            alert('Error: ' + (error.error || 'Failed to create scenario'));
+        }
+    } catch (error) {
+        console.error('Error creating scenario:', error);
+        alert('Error creating scenario');
+    }
+}
+
+async function loadScenarios() {
+    try {
+        const response = await fetch(`/api/patients/${currentPatientId}/scenarios`);
+        const scenarios = await response.json();
+        
+        const container = document.getElementById('scenariosList');
+        
+        if (!scenarios || scenarios.length === 0) {
+            container.innerHTML = '<div class="empty-state">No scenarios run yet</div>';
+            return;
+        }
+        
+        container.innerHTML = scenarios.map(s => `
+            <div class="card" style="margin-bottom: 1rem;">
+                <h4 style="color: var(--primary-navy);">${s.name}</h4>
+                <p style="color: var(--gray-700); margin: 0.5rem 0;">${s.description || 'No description'}</p>
+                <div style="margin-top: 1rem;">
+                    <div><strong>Baseline Risk:</strong> ${s.baseline_risk_level?.toUpperCase() || 'N/A'} (${s.baseline_risk_score !== null ? (s.baseline_risk_score * 100).toFixed(1) + '%' : 'N/A'})</div>
+                    <div><strong>Scenario Risk:</strong> ${s.scenario_risk_level?.toUpperCase() || 'N/A'} (${s.scenario_risk_score !== null ? (s.scenario_risk_score * 100).toFixed(1) + '%' : 'N/A'})</div>
+                    <div><strong>Risk Change:</strong> ${s.risk_change !== null ? (s.risk_change > 0 ? '+' : '') + (s.risk_change * 100).toFixed(1) + '%' : 'N/A'}</div>
+                </div>
+            </div>
+        `).join('');
+    } catch (error) {
+        console.error('Error loading scenarios:', error);
+    }
+}
+
+async function generateSyntheticPatient() {
+    try {
+        const response = await fetch('/api/synthetic/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ type: 'normal' })
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            alert(`Generated synthetic patient: ${result.patient.full_name}`);
+            loadPatients();
+        } else {
+            alert('Error generating synthetic patient');
+        }
+    } catch (error) {
+        console.error('Error generating synthetic patient:', error);
+        alert('Error generating synthetic patient');
+    }
+}
+
+function exportData(format) {
+    window.location.href = `/api/patients/${currentPatientId}/export?format=${format}`;
+}
+
+function switchTab(tabName) {
+    // Hide all tabs
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    document.querySelectorAll('.tab').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    
+    // Show selected tab
+    document.getElementById(`tab-${tabName}`).classList.add('active');
+    event.target.classList.add('active');
+}
+
+function updateScenarioUnit() {
+    const feature = document.getElementById('scenarioFeature').value;
+    document.getElementById('scenarioUnit').textContent = getUnitForType(feature);
+}
+
+function getUnitForType(type) {
+    const units = {
+        'heart_rate': 'bpm',
+        'systolic_bp': 'mmHg',
+        'diastolic_bp': 'mmHg',
+        'bmi': 'kg/m²',
+        'glucose': 'mg/dL',
+        'activity_minutes': 'minutes',
+        'sleep_hours': 'hours'
+    };
+    return units[type] || '';
+}
+
+function showCreatePatientModal() {
+    const name = prompt('Enter patient name:');
+    if (name) {
+        const [firstName, ...lastNameParts] = name.split(' ');
+        const lastName = lastNameParts.join(' ') || '';
+        
+        const data = {
+            first_name: firstName,
+            last_name: lastName,
+            is_synthetic: false
+        };
+        
+        fetch('/api/patients', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(patient => {
+            alert(`Patient created: ${patient.full_name}`);
+            loadPatients();
+        })
+        .catch(error => {
+            console.error('Error creating patient:', error);
+            alert('Error creating patient');
+        });
+    }
+}
+</script>
+{% endblock %}
