@@ -272,9 +272,9 @@ The complete source code, documentation, and evaluation results are available on
 
 ## Video URL
 
-**Status:** Pending recording and upload
+**Status:** PENDING recording and upload
 
-**Actual URL:** [To be added after upload]
+**Actual URL:** [PENDING - To be added after upload]
 
 ---
 
