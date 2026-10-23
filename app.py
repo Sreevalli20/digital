@@ -4,6 +4,7 @@ Main Flask application.
 """
 import os
 from flask import Flask, render_template, request, jsonify, redirect, url_for, flash, send_file, send_from_directory
+from flask_cors import CORS
 from werkzeug.utils import secure_filename
 from datetime import datetime
 import io
@@ -21,6 +22,17 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = config.SECRET_KEY
 app.config['MAX_CONTENT_LENGTH'] = config.MAX_CONTENT_LENGTH
 app.config['UPLOAD_FOLDER'] = config.UPLOAD_FOLDER
+
+# Enable CORS for React frontend on Vercel
+# Allow all origins in development, restrict to specific domains in production
+CORS(app, resources={
+    r"/api/*": {
+        "origins": ["https://working-plum-nine.vercel.app", "https://working-5krhy7jte-siris-projects-3809a50c.vercel.app", "*"],
+        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"],
+        "max_age": 3600
+    }
+})
 
 # Ensure upload directory exists
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
@@ -52,6 +64,7 @@ def allowed_file(filename):
 # Routes
 
 @app.route('/app')
+@app.route('/app/')
 def react_app():
     """Serve the React SPA."""
     return send_from_directory('static', 'index.html')
