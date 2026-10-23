@@ -11,6 +11,9 @@ echo "Copying React build to static folder..."
 rm -rf static
 cp -r working/dist static
 
+echo "Fixing asset paths for subdirectory serving..."
+sed -i 's|"/assets/|"./assets/|g' static/index.html
+
 echo "Installing Python dependencies..."
 pip install -r requirements.txt
 
