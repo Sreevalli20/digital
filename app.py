@@ -53,6 +53,12 @@ def allowed_file(filename):
 
 @app.route('/')
 def index():
+    """Main dashboard."""
+    return render_template('dashboard.html')
+
+
+@app.route('/landing')
+def landing():
     """Landing page."""
     return render_template('index.html')
 
@@ -71,6 +77,42 @@ def health():
 def demo():
     """Enter the interactive demo."""
     return render_template('demo.html')
+
+
+@app.route('/patients')
+def patients():
+    """Patient profiles page."""
+    return render_template('demo.html')
+
+
+@app.route('/trends')
+def trends():
+    """Health trends page."""
+    return render_template('dashboard.html')
+
+
+@app.route('/risk')
+def risk():
+    """Risk insights page."""
+    return render_template('demo.html')
+
+
+@app.route('/scenarios')
+def scenarios():
+    """Scenario simulator page."""
+    return render_template('demo.html')
+
+
+@app.route('/data')
+def data():
+    """Data and imports page."""
+    return render_template('demo.html')
+
+
+@app.route('/about')
+def about():
+    """About page."""
+    return render_template('index.html')
 
 
 @app.route('/api/patients', methods=['GET'])

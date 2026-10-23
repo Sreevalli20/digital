@@ -1,11 +1,13 @@
 {% extends "base.html" %}
 
+{% block body_class %}landing-layout{% endblock %}
+
 {% block title %}Swasthya Twin - Digital Twin for Healthcare{% endblock %}
 
 {% block extra_css %}
 <style>
     .hero {
-        background: linear-gradient(135deg, var(--primary-navy) 0%, var(--primary-dark) 100%);
+        background: linear-gradient(135deg, var(--primary-green) 0%, var(--primary-dark) 100%);
         color: var(--white);
         padding: 4rem 2rem;
         text-align: center;
@@ -18,7 +20,7 @@
     
     .hero .tagline {
         font-size: 1.5rem;
-        color: var(--gray-200);
+        color: rgba(255,255,255,0.9);
         margin-bottom: 2rem;
     }
     
@@ -27,7 +29,7 @@
         margin: 0 auto 2rem;
         font-size: 1.125rem;
         line-height: 1.8;
-        color: var(--gray-100);
+        color: rgba(255,255,255,0.85);
     }
     
     .hero-cta {
@@ -41,7 +43,7 @@
     .section-title {
         text-align: center;
         font-size: 2rem;
-        color: var(--primary-navy);
+        color: var(--gray-800);
         margin-bottom: 1rem;
     }
     
@@ -65,18 +67,20 @@
         background: var(--white);
         padding: 2rem;
         border-radius: 8px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        border: 1px solid var(--gray-200);
         transition: transform 0.2s;
     }
     
     .feature-card:hover {
         transform: translateY(-4px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.12);
     }
     
     .feature-icon {
         width: 60px;
         height: 60px;
-        background: linear-gradient(135deg, var(--accent-teal), var(--accent-blue));
+        background: linear-gradient(135deg, var(--primary-green), var(--accent-mint));
         border-radius: 12px;
         display: flex;
         align-items: center;
@@ -88,17 +92,17 @@
     .feature-title {
         font-size: 1.25rem;
         font-weight: 600;
-        color: var(--primary-navy);
+        color: var(--gray-800);
         margin-bottom: 0.5rem;
     }
     
     .feature-description {
-        color: var(--gray-700);
+        color: var(--gray-600);
         line-height: 1.6;
     }
     
     .problem-section {
-        background-color: var(--gray-50);
+        background-color: var(--bg-light);
     }
     
     .problem-content {
@@ -108,12 +112,12 @@
     
     .problem-title {
         font-size: 1.5rem;
-        color: var(--primary-navy);
+        color: var(--gray-800);
         margin-bottom: 1rem;
     }
     
     .problem-text {
-        color: var(--gray-700);
+        color: var(--gray-600);
         line-height: 1.8;
         margin-bottom: 1.5rem;
     }
@@ -125,7 +129,7 @@
     .architecture-diagram {
         max-width: 900px;
         margin: 0 auto;
-        background: var(--gray-50);
+        background: var(--bg-light);
         padding: 2rem;
         border-radius: 8px;
     }
@@ -137,13 +141,13 @@
         margin-bottom: 1rem;
         background: var(--white);
         border-radius: 6px;
-        border-left: 4px solid var(--accent-teal);
+        border-left: 4px solid var(--primary-green);
     }
     
     .architecture-step-number {
         width: 40px;
         height: 40px;
-        background: var(--accent-teal);
+        background: var(--primary-green);
         color: var(--white);
         border-radius: 50%;
         display: flex;
@@ -159,7 +163,7 @@
     }
     
     .disclaimer {
-        background-color: #fffaf0;
+        background-color: var(--warning-light);
         border: 1px solid var(--warning-amber);
         border-radius: 8px;
         padding: 1.5rem;
@@ -180,7 +184,7 @@
     }
     
     .team-section {
-        background-color: var(--gray-50);
+        background-color: var(--bg-light);
         text-align: center;
     }
     
@@ -191,12 +195,12 @@
     
     .team-name {
         font-size: 1.5rem;
-        color: var(--primary-navy);
+        color: var(--gray-800);
         margin-bottom: 0.5rem;
     }
     
     .team-details {
-        color: var(--gray-700);
+        color: var(--gray-600);
     }
 </style>
 {% endblock %}
@@ -212,7 +216,7 @@
             Simulate hypothetical interventions and understand how changes affect health outcomes.
         </p>
         <div class="hero-cta">
-            <a href="/demo" class="btn btn-primary">Try Interactive Demo</a>
+            <a href="/" class="btn btn-primary">Explore Dashboard</a>
         </div>
     </div>
 </section>

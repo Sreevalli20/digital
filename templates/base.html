@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Swasthya Twin - Digital Twin for Healthcare{% endblock %}</title>
+    <title>{% block title %}Swasthya Twin - Your Health, Understood Over Time{% endblock %}</title>
     <style>
         * {
             margin: 0;
@@ -14,139 +14,246 @@
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
             line-height: 1.6;
-            color: #333;
-            background-color: #f8f9fa;
+            color: #2d3748;
+            background-color: #fafafa;
         }
         
-        /* Color Palette */
+        /* Premium Digital Health Color Palette */
         :root {
-            --primary-navy: #1a365d;
-            --primary-dark: #2c5282;
-            --accent-teal: #319795;
-            --accent-blue: #4299e1;
+            --primary-green: #2d5a3d;
+            --primary-dark: #1e3d28;
+            --accent-mint: #68d391;
+            --accent-light-mint: #c6f6d5;
             --warning-amber: #d69e2e;
+            --warning-light: #fefcbf;
             --danger-red: #c53030;
+            --danger-light: #fed7d7;
             --white: #ffffff;
-            --gray-50: #f7fafc;
+            --bg-warm: #fafafa;
+            --bg-light: #f7fafc;
             --gray-100: #edf2f7;
             --gray-200: #e2e8f0;
             --gray-300: #cbd5e0;
+            --gray-400: #a0aec0;
             --gray-500: #718096;
-            --gray-700: #4a5568;
-            --gray-900: #1a202c;
+            --gray-600: #4a5568;
+            --gray-700: #2d3748;
+            --gray-800: #1a202c;
+            --gray-900: #171923;
         }
         
-        /* Navigation */
-        .navbar {
-            background-color: var(--primary-navy);
+        /* Application Layout */
+        .app-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        /* Sidebar Navigation */
+        .sidebar {
+            width: 260px;
+            background-color: var(--primary-green);
+            color: var(--white);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 100;
+        }
+        
+        .sidebar-brand {
+            padding: 1.5rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .sidebar-brand-text {
+            font-size: 1.25rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        
+        .sidebar-brand-sub {
+            font-size: 0.75rem;
+            color: var(--accent-mint);
+            margin-top: 0.25rem;
+        }
+        
+        .sidebar-nav {
+            flex: 1;
+            padding: 1rem 0;
+        }
+        
+        .sidebar-nav-item {
+            display: block;
+            padding: 0.875rem 1.5rem;
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+        
+        .sidebar-nav-item:hover {
+            background-color: rgba(255,255,255,0.1);
+            color: var(--white);
+        }
+        
+        .sidebar-nav-item.active {
+            background-color: rgba(255,255,255,0.15);
+            color: var(--white);
+            border-left-color: var(--accent-mint);
+        }
+        
+        .sidebar-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            font-size: 0.75rem;
+            color: rgba(255,255,255,0.6);
+        }
+        
+        /* Main Content Area */
+        .main-content {
+            flex: 1;
+            margin-left: 260px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Top Navigation Bar */
+        .top-nav {
+            background-color: var(--white);
+            border-bottom: 1px solid var(--gray-200);
             padding: 1rem 2rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 50;
         }
         
-        .navbar-brand {
+        .top-nav-left {
             display: flex;
             align-items: center;
-            gap: 0.75rem;
-            color: var(--white);
-            text-decoration: none;
-            font-size: 1.5rem;
-            font-weight: 600;
+            gap: 1rem;
         }
         
-        .logo-icon {
-            width: 40px;
-            height: 40px;
-            background: linear-gradient(135deg, var(--accent-teal), var(--accent-blue));
-            border-radius: 8px;
+        .breadcrumb {
+            font-size: 0.875rem;
+            color: var(--gray-500);
+        }
+        
+        .breadcrumb a {
+            color: var(--gray-600);
+            text-decoration: none;
+        }
+        
+        .breadcrumb a:hover {
+            color: var(--primary-green);
+        }
+        
+        .top-nav-right {
             display: flex;
             align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 1.2rem;
+            gap: 1rem;
         }
         
-        .navbar-nav {
-            display: flex;
-            gap: 2rem;
-            list-style: none;
+        .synthetic-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.375rem 0.75rem;
+            background-color: var(--accent-light-mint);
+            color: var(--primary-dark);
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
         }
         
-        .navbar-nav a {
-            color: var(--gray-200);
-            text-decoration: none;
-            transition: color 0.2s;
+        .synthetic-badge::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            background-color: var(--primary-green);
+            border-radius: 50%;
+            margin-right: 0.5rem;
         }
         
-        .navbar-nav a:hover {
-            color: var(--white);
-        }
-        
-        /* Container */
-        .container {
-            max-width: 1200px;
+        /* Content Container */
+        .content-container {
+            flex: 1;
+            padding: 2rem;
+            max-width: 1400px;
             margin: 0 auto;
-            padding: 0 1rem;
+            width: 100%;
         }
         
         /* Buttons */
         .btn {
-            display: inline-block;
-            padding: 0.75rem 1.5rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.625rem 1.25rem;
             border: none;
             border-radius: 6px;
-            font-size: 1rem;
+            font-size: 0.875rem;
             font-weight: 500;
             cursor: pointer;
             text-decoration: none;
             transition: all 0.2s;
+            gap: 0.5rem;
         }
         
         .btn-primary {
-            background-color: var(--accent-teal);
+            background-color: var(--primary-green);
             color: var(--white);
         }
         
         .btn-primary:hover {
-            background-color: #2c7a7b;
+            background-color: var(--primary-dark);
         }
         
         .btn-secondary {
-            background-color: var(--primary-dark);
+            background-color: var(--gray-600);
             color: var(--white);
         }
         
         .btn-secondary:hover {
-            background-color: var(--primary-navy);
+            background-color: var(--gray-700);
         }
         
         .btn-outline {
             background-color: transparent;
-            border: 2px solid var(--accent-teal);
-            color: var(--accent-teal);
+            border: 1.5px solid var(--primary-green);
+            color: var(--primary-green);
         }
         
         .btn-outline:hover {
-            background-color: var(--accent-teal);
+            background-color: var(--primary-green);
             color: var(--white);
+        }
+        
+        .btn-sm {
+            padding: 0.375rem 0.75rem;
+            font-size: 0.75rem;
         }
         
         /* Cards */
         .card {
             background: var(--white);
             border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            border: 1px solid var(--gray-200);
             padding: 1.5rem;
             margin-bottom: 1.5rem;
         }
         
         .card-header {
-            font-size: 1.25rem;
+            font-size: 1.125rem;
             font-weight: 600;
             margin-bottom: 1rem;
-            color: var(--primary-navy);
+            color: var(--gray-800);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
         
         /* Forms */
@@ -159,39 +266,46 @@
             margin-bottom: 0.5rem;
             font-weight: 500;
             color: var(--gray-700);
+            font-size: 0.875rem;
         }
         
         .form-control {
             width: 100%;
-            padding: 0.75rem;
+            padding: 0.625rem 0.875rem;
             border: 1px solid var(--gray-300);
             border-radius: 6px;
-            font-size: 1rem;
+            font-size: 0.875rem;
+            transition: all 0.2s;
         }
         
         .form-control:focus {
             outline: none;
-            border-color: var(--accent-teal);
-            box-shadow: 0 0 0 3px rgba(49, 151, 149, 0.1);
+            border-color: var(--primary-green);
+            box-shadow: 0 0 0 3px rgba(45, 90, 61, 0.1);
         }
         
         /* Tables */
         .table {
             width: 100%;
             border-collapse: collapse;
+            font-size: 0.875rem;
         }
         
         .table th,
         .table td {
-            padding: 0.75rem;
+            padding: 0.75rem 1rem;
             text-align: left;
             border-bottom: 1px solid var(--gray-200);
         }
         
         .table th {
-            background-color: var(--gray-50);
+            background-color: var(--bg-light);
             font-weight: 600;
             color: var(--gray-700);
+        }
+        
+        .table tr:hover {
+            background-color: var(--bg-light);
         }
         
         /* Alerts */
@@ -199,78 +313,208 @@
             padding: 1rem;
             border-radius: 6px;
             margin-bottom: 1rem;
+            font-size: 0.875rem;
         }
         
         .alert-info {
             background-color: #ebf8ff;
-            border-left: 4px solid var(--accent-blue);
-            color: var(--primary-dark);
+            border-left: 4px solid var(--primary-green);
+            color: var(--gray-700);
         }
         
         .alert-warning {
-            background-color: #fffaf0;
+            background-color: var(--warning-light);
             border-left: 4px solid var(--warning-amber);
             color: #975a16;
         }
         
         .alert-danger {
-            background-color: #fff5f5;
+            background-color: var(--danger-light);
             border-left: 4px solid var(--danger-red);
             color: #9b2c2c;
         }
         
+        /* Empty States */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 2rem;
+            color: var(--gray-500);
+        }
+        
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+        
+        .empty-state-title {
+            font-size: 1.125rem;
+            font-weight: 500;
+            color: var(--gray-700);
+            margin-bottom: 0.5rem;
+        }
+        
+        .empty-state-text {
+            font-size: 0.875rem;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        
+        /* Loading States */
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: var(--gray-500);
+        }
+        
+        .loading-spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid var(--gray-200);
+            border-top-color: var(--primary-green);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 1rem;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
         /* Footer */
         .footer {
-            background-color: var(--gray-900);
-            color: var(--gray-300);
-            padding: 2rem;
-            margin-top: 3rem;
+            background-color: var(--gray-800);
+            color: var(--gray-400);
+            padding: 1.5rem 2rem;
+            margin-top: auto;
+            font-size: 0.875rem;
         }
         
         .footer-content {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
-            text-align: center;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .footer-links {
+            display: flex;
+            gap: 1.5rem;
+        }
+        
+        .footer-links a {
+            color: var(--gray-400);
+            text-decoration: none;
+        }
+        
+        .footer-links a:hover {
+            color: var(--white);
         }
         
         /* Responsive */
-        @media (max-width: 768px) {
-            .navbar {
-                flex-direction: column;
-                gap: 1rem;
+        @media (max-width: 1024px) {
+            .sidebar {
+                width: 200px;
             }
             
-            .navbar-nav {
-                gap: 1rem;
+            .main-content {
+                margin-left: 200px;
             }
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+            
+            .top-nav {
+                flex-direction: column;
+                gap: 1rem;
+                padding: 1rem;
+            }
+            
+            .content-container {
+                padding: 1rem;
+            }
+            
+            .footer-content {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+        }
+        
+        /* Landing page specific override */
+        .landing-layout .sidebar {
+            display: none;
+        }
+        
+        .landing-layout .main-content {
+            margin-left: 0;
         }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
-<body>
-    <nav class="navbar">
-        <a href="/" class="navbar-brand">
-            <div class="logo-icon">ST</div>
-            Swasthya Twin
-        </a>
-        <ul class="navbar-nav">
-            <li><a href="/">Home</a></li>
-            <li><a href="/demo">Demo</a></li>
-        </ul>
-    </nav>
-    
-    <main>
-        {% block content %}{% endblock %}
-    </main>
-    
-    <footer class="footer">
-        <div class="footer-content">
-            <p>&copy; 2026 Swasthya Twin - Brain Catalyst Team</p>
-            <p style="margin-top: 0.5rem; font-size: 0.875rem;">
-                Happiest Health Digital Twin Challenge 2026
-            </p>
+<body class="{% block body_class %}app-layout{% endblock %}">
+    {% if body_class == 'app-layout' %}
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <div class="sidebar-brand-text">Swasthya Twin</div>
+            <div class="sidebar-brand-sub">Your Health, Understood Over Time</div>
         </div>
-    </footer>
+        <nav class="sidebar-nav">
+            <a href="/" class="sidebar-nav-item {% if request.path == '/' %}active{% endif %}">Overview</a>
+            <a href="/patients" class="sidebar-nav-item {% if request.path == '/patients' %}active{% endif %}">Patient Profiles</a>
+            <a href="/trends" class="sidebar-nav-item {% if request.path == '/trends' %}active{% endif %}">Health Trends</a>
+            <a href="/risk" class="sidebar-nav-item {% if request.path == '/risk' %}active{% endif %}">Risk Insights</a>
+            <a href="/scenarios" class="sidebar-nav-item {% if request.path == '/scenarios' %}active{% endif %}">Scenario Simulator</a>
+            <a href="/data" class="sidebar-nav-item {% if request.path == '/data' %}active{% endif %}">Data & Imports</a>
+            <a href="/about" class="sidebar-nav-item {% if request.path == '/about' %}active{% endif %}">About</a>
+        </nav>
+        <div class="sidebar-footer">
+            Research Prototype<br>
+            Not for clinical use
+        </div>
+    </aside>
+    {% endif %}
+    
+    <main class="main-content">
+        {% if body_class == 'app-layout' %}
+        <nav class="top-nav">
+            <div class="top-nav-left">
+                <div class="breadcrumb">{% block breadcrumb %}Overview{% endblock %}</div>
+            </div>
+            <div class="top-nav-right">
+                {% block top_nav_right %}
+                <span class="synthetic-badge">Synthetic Demo Data</span>
+                {% endblock %}
+            </div>
+        </nav>
+        {% endif %}
+        
+        <div class="content-container">
+            {% block content %}{% endblock %}
+        </div>
+        
+        <footer class="footer">
+            <div class="footer-content">
+                <div>
+                    &copy; 2026 Swasthya Twin - Brain Catalyst Team
+                </div>
+                <div class="footer-links">
+                    <a href="/about">About</a>
+                    <a href="https://github.com/Sreevalli20/digital" target="_blank" rel="noopener">GitHub</a>
+                </div>
+            </div>
+        </footer>
+    </main>
     
     {% block extra_js %}{% endblock %}
 </body>

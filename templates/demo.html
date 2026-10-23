@@ -1,13 +1,11 @@
 {% extends "base.html" %}
 
-{% block title %}Swasthya Twin - Interactive Demo{% endblock %}
+{% block title %}Swasthya Twin - Patient Workspace{% endblock %}
+
+{% block breadcrumb %}Patient Workspace{% endblock %}
 
 {% block extra_css %}
 <style>
-    .demo-container {
-        padding: 2rem;
-    }
-    
     .demo-header {
         display: flex;
         justify-content: space-between;
@@ -16,13 +14,20 @@
     }
     
     .demo-title {
-        font-size: 2rem;
-        color: var(--primary-navy);
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--gray-800);
+        margin-bottom: 0.5rem;
+    }
+    
+    .demo-subtitle {
+        color: var(--gray-500);
+        font-size: 0.875rem;
     }
     
     .demo-actions {
         display: flex;
-        gap: 1rem;
+        gap: 0.75rem;
     }
     
     .patient-selector {
@@ -31,7 +36,7 @@
     
     .patient-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
         gap: 1rem;
         margin-top: 1rem;
     }
@@ -40,25 +45,52 @@
         background: var(--white);
         border: 2px solid var(--gray-200);
         border-radius: 8px;
-        padding: 1.5rem;
+        padding: 1.25rem;
         cursor: pointer;
         transition: all 0.2s;
     }
     
     .patient-card:hover {
-        border-color: var(--accent-teal);
+        border-color: var(--primary-green);
         box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
     
     .patient-card.active {
-        border-color: var(--accent-teal);
-        background-color: #f0fff4;
+        border-color: var(--primary-green);
+        background-color: var(--accent-light-mint);
+    }
+    
+    .metric-card {
+        background: var(--white);
+        border-radius: 8px;
+        padding: 1.5rem;
+        border: 1px solid var(--gray-200);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+    
+    .metric-label {
+        font-size: 0.875rem;
+        color: var(--gray-500);
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+    }
+    
+    .metric-value {
+        font-size: 2rem;
+        font-weight: 600;
+        color: var(--gray-800);
+    }
+    
+    .patient-card-id {
+        font-size: 0.75rem;
+        color: var(--gray-500);
+        margin-bottom: 0.25rem;
     }
     
     .patient-card-name {
-        font-size: 1.25rem;
+        font-size: 1.125rem;
         font-weight: 600;
-        color: var(--primary-navy);
+        color: var(--gray-800);
         margin-bottom: 0.5rem;
     }
     
@@ -70,10 +102,11 @@
     .patient-card-badge {
         display: inline-block;
         padding: 0.25rem 0.5rem;
-        background-color: var(--accent-blue);
-        color: var(--white);
+        background-color: var(--accent-light-mint);
+        color: var(--primary-dark);
         border-radius: 4px;
         font-size: 0.75rem;
+        font-weight: 500;
         margin-top: 0.5rem;
     }
     
@@ -88,36 +121,17 @@
         grid-column: 1 / -1;
     }
     
-    .metric-card {
-        background: var(--white);
-        border-radius: 8px;
-        padding: 1.5rem;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
-    
-    .metric-label {
-        font-size: 0.875rem;
-        color: var(--gray-500);
-        margin-bottom: 0.5rem;
-    }
-    
-    .metric-value {
-        font-size: 2rem;
-        font-weight: 600;
-        color: var(--primary-navy);
-    }
-    
     .metric-change {
         font-size: 0.875rem;
         margin-top: 0.5rem;
     }
     
     .metric-change.positive {
-        color: #c53030;
+        color: var(--danger-red);
     }
     
     .metric-change.negative {
-        color: #2f855a;
+        color: var(--primary-green);
     }
     
     .risk-badge {
@@ -129,17 +143,17 @@
     }
     
     .risk-badge.low {
-        background-color: #c6f6d5;
-        color: #22543d;
+        background-color: var(--accent-light-mint);
+        color: var(--primary-dark);
     }
     
     .risk-badge.moderate {
-        background-color: #fefcbf;
+        background-color: var(--warning-light);
         color: #744210;
     }
     
     .risk-badge.high {
-        background-color: #fed7d7;
+        background-color: var(--danger-light);
         color: #822727;
     }
     
@@ -160,19 +174,19 @@
         background: none;
         border: none;
         cursor: pointer;
-        font-size: 1rem;
+        font-size: 0.875rem;
         color: var(--gray-500);
         border-bottom: 2px solid transparent;
         margin-bottom: -2px;
     }
     
     .tab:hover {
-        color: var(--primary-navy);
+        color: var(--gray-700);
     }
     
     .tab.active {
-        color: var(--primary-navy);
-        border-bottom-color: var(--accent-teal);
+        color: var(--primary-green);
+        border-bottom-color: var(--primary-green);
     }
     
     .tab-content {
@@ -223,7 +237,7 @@
     
     .feature-name {
         font-weight: 600;
-        color: var(--primary-navy);
+        color: var(--gray-800);
     }
     
     .feature-contribution {
@@ -253,7 +267,10 @@
 {% block content %}
 <div class="demo-container">
     <div class="demo-header">
-        <h1 class="demo-title">Patient Workspace</h1>
+        <div>
+            <h1 class="demo-title">Patient Workspace</h1>
+            <p class="demo-subtitle">Manage patient profiles, observations, and scenarios</p>
+        </div>
         <div class="demo-actions">
             <button class="btn btn-outline" onclick="generateSyntheticPatient()">Generate Synthetic Patient</button>
             <button class="btn btn-primary" onclick="showCreatePatientModal()">Create Patient</button>
@@ -279,7 +296,7 @@
         <div id="tab-overview" class="tab-content active">
             <div class="dashboard-grid">
                 <div class="metric-card dashboard-full">
-                    <h3 style="color: var(--primary-navy); margin-bottom: 1rem;">Patient Summary</h3>
+                    <h3 style="color: var(--gray-800); margin-bottom: 1rem;">Patient Summary</h3>
                     <div id="patientSummary"></div>
                 </div>
                 
@@ -305,14 +322,14 @@
             </div>
             
             <div class="card" style="margin-top: 1.5rem;">
-                <h3 style="color: var(--primary-navy); margin-bottom: 1rem;">Feature States</h3>
+                <h3 style="color: var(--gray-800); margin-bottom: 1rem;">Feature States</h3>
                 <div id="featureStates"></div>
             </div>
         </div>
         
         <div id="tab-observations" class="tab-content">
             <div class="card">
-                <h3 style="color: var(--primary-navy); margin-bottom: 1rem;">Add Observation</h3>
+                <h3 style="color: var(--gray-800); margin-bottom: 1rem;">Add Observation</h3>
                 <form id="observationForm" class="observation-form" onsubmit="addObservation(event)">
                     <div class="form-group">
                         <label class="form-label">Type</label>
@@ -344,28 +361,28 @@
             </div>
             
             <div class="card" style="margin-top: 1.5rem;">
-                <h3 style="color: var(--primary-navy); margin-bottom: 1rem;">CSV Upload</h3>
+                <h3 style="color: var(--gray-800); margin-bottom: 1rem;">CSV Upload</h3>
                 <input type="file" id="csvFile" accept=".csv" style="margin-bottom: 1rem;">
                 <button class="btn btn-secondary" onclick="uploadCSV()">Upload CSV</button>
                 <a href="/api/csv/example" class="btn btn-outline" style="margin-left: 1rem;">Download Example</a>
             </div>
             
             <div class="card" style="margin-top: 1.5rem;">
-                <h3 style="color: var(--primary-navy); margin-bottom: 1rem;">Recent Observations</h3>
+                <h3 style="color: var(--gray-800); margin-bottom: 1rem;">Recent Observations</h3>
                 <div id="observationsList"></div>
             </div>
         </div>
         
         <div id="tab-risk" class="tab-content">
             <div class="card">
-                <h3 style="color: var(--primary-navy); margin-bottom: 1rem;">Risk Assessment</h3>
+                <h3 style="color: var(--gray-800); margin-bottom: 1rem;">Risk Assessment</h3>
                 <div id="riskAssessment"></div>
             </div>
         </div>
         
         <div id="tab-scenarios" class="tab-content">
             <div class="card">
-                <h3 style="color: var(--primary-navy); margin-bottom: 1rem;">Create Scenario</h3>
+                <h3 style="color: var(--gray-800); margin-bottom: 1rem;">Create Scenario</h3>
                 <form id="scenarioForm" class="scenario-form" onsubmit="createScenario(event)">
                     <div class="form-group">
                         <label class="form-label">Scenario Name</label>
@@ -395,14 +412,14 @@
             </div>
             
             <div class="card" style="margin-top: 1.5rem;">
-                <h3 style="color: var(--primary-navy); margin-bottom: 1rem;">Scenario Results</h3>
+                <h3 style="color: var(--gray-800); margin-bottom: 1rem;">Scenario Results</h3>
                 <div id="scenariosList"></div>
             </div>
         </div>
         
         <div id="tab-export" class="tab-content">
             <div class="card">
-                <h3 style="color: var(--primary-navy); margin-bottom: 1rem;">Export Patient Data</h3>
+                <h3 style="color: var(--gray-800); margin-bottom: 1rem;">Export Patient Data</h3>
                 <p style="color: var(--gray-700); margin-bottom: 1.5rem;">
                     Download patient data, Digital Twin state, risk assessment, and observations as evidence bundles.
                 </p>
@@ -410,6 +427,9 @@
                     <button class="btn btn-primary" onclick="exportData('json')">Export as JSON</button>
                     <button class="btn btn-secondary" onclick="exportData('csv')">Export Observations (CSV)</button>
                     <button class="btn btn-outline" onclick="exportData('report')">Export Summary Report</button>
+                </div>
+                <div style="margin-top: 1.5rem; padding: 1rem; background: var(--bg-light); border-radius: 6px; font-size: 0.875rem; color: var(--gray-600);">
+                    <strong>Privacy Note:</strong> Exports contain patient observations and computed states. Handle exported files securely and do not share with unauthorized parties.
                 </div>
             </div>
         </div>
@@ -437,11 +457,10 @@ async function loadPatients() {
         
         grid.innerHTML = patients.map(p => `
             <div class="patient-card" onclick="selectPatient(${p.id})" data-id="${p.id}">
-                <div class="patient-card-name">${p.full_name || 'Unknown'}</div>
+                <div class="patient-card-id">ID: ${p.id}</div>
+                <div class="patient-card-name">${p.external_id || `DEMO-${String(p.id).padStart(3, '0')}`}</div>
                 <div class="patient-card-meta">
-                    ID: ${p.id}<br>
-                    Age: ${p.age || 'Unknown'}<br>
-                    Gender: ${p.gender || 'Unknown'}
+                    ${p.age ? `Age: ${p.age}` : ''} ${p.gender ? `| ${p.gender}` : ''}
                 </div>
                 ${p.is_synthetic ? '<span class="patient-card-badge">Synthetic</span>' : ''}
             </div>
@@ -505,8 +524,8 @@ async function loadPatientData() {
 
 function updatePatientSummary(patient) {
     document.getElementById('patientSummary').innerHTML = `
-        <p><strong>Name:</strong> ${patient.full_name || 'Unknown'}</p>
         <p><strong>Patient ID:</strong> ${patient.id}</p>
+        <p><strong>Identifier:</strong> ${patient.external_id || `DEMO-${String(patient.id).padStart(3, '0')}`}</p>
         <p><strong>Age:</strong> ${patient.age || 'Unknown'}</p>
         <p><strong>Gender:</strong> ${patient.gender || 'Unknown'}</p>
         <p><strong>Data Source:</strong> ${patient.is_synthetic ? 'Synthetic' : 'Real'}</p>
@@ -569,7 +588,7 @@ function updateRiskAssessment(risk) {
     container.innerHTML = `
         <div style="margin-bottom: 1.5rem;">
             <span class="risk-badge ${riskClass}">${risk.risk_level ? risk.risk_level.toUpperCase() : 'UNKNOWN'}</span>
-            <div style="margin-top: 0.5rem; font-size: 1.25rem; color: var(--primary-navy);">
+            <div style="margin-top: 0.5rem; font-size: 1.25rem; color: var(--gray-800);">
                 Risk Score: ${risk.risk_score !== null ? (risk.risk_score * 100).toFixed(1) + '%' : 'N/A'}
             </div>
             <div style="color: var(--gray-500); margin-top: 0.25rem;">
@@ -577,7 +596,7 @@ function updateRiskAssessment(risk) {
             </div>
         </div>
         
-        <h4 style="color: var(--primary-navy); margin-bottom: 1rem;">Feature Contributions</h4>
+        <h4 style="color: var(--gray-800); margin-bottom: 1rem;">Feature Contributions</h4>
         <ul class="feature-list">
             ${risk.feature_contributions.map(fc => `
                 <li class="feature-item">
@@ -591,10 +610,18 @@ function updateRiskAssessment(risk) {
         </ul>
         
         <div style="margin-top: 1.5rem;">
-            <h4 style="color: var(--primary-navy); margin-bottom: 0.5rem;">Limitations</h4>
+            <h4 style="color: var(--gray-800); margin-bottom: 0.5rem;">Limitations</h4>
             <ul style="color: var(--gray-700); font-size: 0.875rem;">
                 ${risk.limitations.map(l => `<li>${l}</li>`).join('')}
             </ul>
+        </div>
+        
+        <div style="margin-top: 1.5rem; padding: 1rem; background: var(--warning-light); border-left: 4px solid var(--warning-amber); border-radius: 4px;">
+            <strong style="color: #975a16;">Research Disclaimer:</strong>
+            <p style="color: #975a16; font-size: 0.875rem; margin-top: 0.5rem;">
+                This is an explainable rules-based screening prototype, not a validated diagnostic model. 
+                Consult qualified healthcare professionals for medical decisions.
+            </p>
         </div>
     `;
 }
@@ -761,12 +788,15 @@ async function loadScenarios() {
         
         container.innerHTML = scenarios.map(s => `
             <div class="card" style="margin-bottom: 1rem;">
-                <h4 style="color: var(--primary-navy);">${s.name}</h4>
+                <h4 style="color: var(--gray-800);">${s.name}</h4>
                 <p style="color: var(--gray-700); margin: 0.5rem 0;">${s.description || 'No description'}</p>
                 <div style="margin-top: 1rem;">
                     <div><strong>Baseline Risk:</strong> ${s.baseline_risk_level?.toUpperCase() || 'N/A'} (${s.baseline_risk_score !== null ? (s.baseline_risk_score * 100).toFixed(1) + '%' : 'N/A'})</div>
                     <div><strong>Scenario Risk:</strong> ${s.scenario_risk_level?.toUpperCase() || 'N/A'} (${s.scenario_risk_score !== null ? (s.scenario_risk_score * 100).toFixed(1) + '%' : 'N/A'})</div>
                     <div><strong>Risk Change:</strong> ${s.risk_change !== null ? (s.risk_change > 0 ? '+' : '') + (s.risk_change * 100).toFixed(1) + '%' : 'N/A'}</div>
+                </div>
+                <div style="margin-top: 1rem; padding: 0.75rem; background: var(--warning-light); border-left: 4px solid var(--warning-amber); border-radius: 4px; font-size: 0.875rem; color: #975a16;">
+                    <strong>Hypothetical simulation</strong> — not a prediction or guarantee of clinical outcome
                 </div>
             </div>
         `).join('');

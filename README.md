@@ -148,6 +148,7 @@ digital/
 ├── templates/                  # HTML templates
 │   ├── base.html
 │   ├── index.html
+│   ├── dashboard.html
 │   └── demo.html
 ├── static/                     # Static assets
 │   ├── css/
@@ -220,9 +221,9 @@ python app.py
 
 ### Interactive Demo
 
-1. Navigate to the landing page
-2. Click "Try Interactive Demo"
-3. Generate a synthetic patient or create a new one
+1. Navigate to the application dashboard
+2. Select a patient profile or generate a synthetic patient
+3. View health metrics, trends, and recent activity
 4. Add observations manually or upload CSV
 5. View Digital Twin state and risk assessment
 6. Create and run hypothetical scenarios
@@ -252,9 +253,16 @@ Download example template from the demo interface.
 
 ### API Endpoints
 
-- `GET /` - Landing page
+- `GET /` - Main dashboard
+- `GET /landing` - Landing page
 - `GET /health` - Health check
-- `GET /demo` - Interactive demo
+- `GET /demo` - Patient workspace
+- `GET /patients` - Patient profiles
+- `GET /trends` - Health trends
+- `GET /risk` - Risk insights
+- `GET /scenarios` - Scenario simulator
+- `GET /data` - Data and imports
+- `GET /about` - About page
 - `GET /api/patients` - List all patients
 - `POST /api/patients` - Create patient
 - `GET /api/patients/<id>` - Get patient
@@ -389,6 +397,14 @@ Professional presentation slides covering:
 
 ## Key Innovations
 
+### Premium Digital Health Interface
+- Modern, responsive dashboard design with sidebar navigation
+- Data-driven metric cards with real-time patient data
+- Longitudinal trend visualization with interactive charts
+- Meaningful empty states and loading indicators
+- Premium color palette (forest green, mint, amber, slate)
+- Mobile-responsive layouts
+
 ### Baseline-to-Scenario Evidence Chain
 Every meaningful change shows a traceable chain:
 - Observed data → validated features → comparison with personal baseline → algorithm output → explanation → hypothetical scenario comparison
@@ -404,12 +420,14 @@ Every meaningful change shows a traceable chain:
 - Evidence-based clinical thresholds
 - Clear uncertainty communication
 - Explicit limitations documentation
+- Research disclaimer prominently displayed
 
 ### Scenario Simulation
 - Hypothetical intervention exploration
 - Baseline-to-scenario comparison
 - Risk change quantification
 - Non-destructive testing
+- Clear labeling as hypothetical simulation
 
 ---
 
@@ -419,11 +437,14 @@ Every meaningful change shows a traceable chain:
 - Input validation for all user inputs
 - Parameterized SQL queries (SQL injection prevention)
 - Secure file upload handling
-- CSRF protection for state-changing forms
 - Environment-based secret keys
 - No sensitive data in logs
 - No external API calls
 - Local-only data storage
+- Pseudonymous patient identifiers (DEMO-XXX format)
+- Clear synthetic data indicators
+- Research disclaimers on risk assessment and scenario results
+- Privacy notes on export functionality
 
 ### Limitations
 - Ephemeral storage on free deployment tier
