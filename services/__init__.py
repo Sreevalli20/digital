@@ -7,6 +7,7 @@ from .scenario_engine import ScenarioEngine
 from .synthetic_data_generator import SyntheticDataGenerator
 from .fhir_mapper import FHIRMapper
 from .evidence_exporter import EvidenceExporter
+from .api_adapter import APIAdapter
 
 __all__ = [
     'ObservationValidator',
@@ -16,5 +17,6 @@ __all__ = [
     'ScenarioEngine',
     'SyntheticDataGenerator',
     'FHIRMapper',
-    'EvidenceExporter'
+    'EvidenceExporter',
+    'APIAdapter'
 ]

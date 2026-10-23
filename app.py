@@ -3,7 +3,7 @@ Swasthya Twin - Explainable, Adaptive Patient Digital Twin
 Main Flask application.
 """
 import os
-from flask import Flask, render_template, request, jsonify, redirect, url_for, flash, send_file
+from flask import Flask, render_template, request, jsonify, redirect, url_for, flash, send_file, send_from_directory
 from werkzeug.utils import secure_filename
 from datetime import datetime
 import io
@@ -12,7 +12,7 @@ from repositories import Database, PatientRepository, ObservationRepository, Sce
 from services import (
     ObservationValidator, CSVIngestionService, DigitalTwinEngine,
     PredictionEngine, ScenarioEngine, SyntheticDataGenerator,
-    EvidenceExporter
+    EvidenceExporter, APIAdapter
 )
 from domain import Patient, Observation, Scenario
 
@@ -50,6 +50,16 @@ def allowed_file(filename):
 
 
 # Routes
+
+@app.route('/app')
+def react_app():
+    """Serve the React SPA."""
+    return send_from_directory('static', 'index.html')
+
+@app.route('/app/<path:path>')
+def react_static(path):
+    """Serve React static assets."""
+    return send_from_directory('static', path)
 
 @app.route('/')
 def index():
@@ -525,6 +535,95 @@ def backup_database():
     backup_path = os.path.join(config.DATABASE_DIR, f'backup_{timestamp}.db')
     db.backup_database(backup_path)
     return jsonify({'message': 'Backup created', 'path': backup_path})
+
+
+# React UI API Endpoints
+@app.route('/api/react/patients', methods=['GET'])
+def react_list_patients():
+    """Get list of all patients in React format."""
+    patients = patient_repo.get_all()
+    react_patients = [APIAdapter.patient_to_react_format(p) for p in patients]
+    return jsonify(react_patients)
+
+
+@app.route('/api/react/patients/<external_id>/observations', methods=['GET'])
+def react_get_observations(external_id):
+    """Get observations for a patient in React format."""
+    # Find patient by external_id
+    patients = patient_repo.get_all()
+    patient = next((p for p in patients if p.external_id == external_id), None)
+
+    if not patient:
+        return jsonify({'error': 'Patient not found'}), 404
+
+    observations = observation_repo.get_by_patient(patient.id)
+    react_observations = [APIAdapter.observation_to_react_format(obs, external_id) for obs in observations]
+    return jsonify(react_observations)
+
+
+@app.route('/api/react/patients/<external_id>/risk', methods=['GET'])
+def react_get_risk_assessment(external_id):
+    """Get risk assessment for a patient in React format."""
+    # Find patient by external_id
+    patients = patient_repo.get_all()
+    patient = next((p for p in patients if p.external_id == external_id), None)
+
+    if not patient:
+        return jsonify({'error': 'Patient not found'}), 404
+
+    # Get risk assessment
+    state = twin_engine.compute_state(patient.id)
+    risk = prediction_engine.assess_risk(state)
+
+    react_risk = APIAdapter.risk_assessment_to_react_format(risk, external_id)
+    return jsonify([react_risk])  # Return as array for React
+
+
+@app.route('/api/react/metrics', methods=['GET'])
+def react_get_metrics():
+    """Get metric definitions in React format."""
+    return jsonify(APIAdapter.get_metric_definitions())
+
+
+@app.route('/api/react/demo/initialize', methods=['POST'])
+def react_initialize_demo():
+    """Initialize demo workspace for React UI."""
+    # Check if any patients exist
+    patients = patient_repo.get_all()
+
+    if len(patients) > 0:
+        # Return existing patients without creating new ones
+        react_patients = [APIAdapter.patient_to_react_format(p) for p in patients]
+        return jsonify({
+            'message': 'Demo already initialized',
+            'patients': react_patients,
+            'created': False
+        }), 200
+
+    # Generate demo patient with DEMO-001 identifier
+    patient = synthetic_generator.generate_patient(is_synthetic=True, use_demo_name=True, external_id="DEMO-001")
+    observations = synthetic_generator.generate_observations(None, days_back=90, daily=True)
+
+    # Save to database
+    created_patient = patient_repo.create(patient)
+
+    # Set patient_id for observations
+    for obs in observations:
+        obs.patient_id = created_patient.id
+
+    created_observations = observation_repo.create_batch(observations)
+
+    react_patient = APIAdapter.patient_to_react_format(created_patient)
+    react_observations = [APIAdapter.observation_to_react_format(obs, created_patient.external_id) for obs in created_observations]
+
+    return jsonify({
+        'message': 'Demo initialized successfully',
+        'patient': react_patient,
+        'observations': react_observations,
+        'observations_count': len(created_observations),
+        'patient_id': created_patient.external_id,
+        'created': True
+    }), 201
 
 
 # Error handlers

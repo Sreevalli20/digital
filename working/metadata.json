@@ -1,0 +1,6 @@
+{
+  "name": "Swasthya Twin",
+  "description": "Longitudinal Digital Health Twin analytics dashboard for the Happiest Health Challenge 2026.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
