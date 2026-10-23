@@ -6,6 +6,7 @@ from datetime import datetime
 from typing import List, Dict, Any, Optional
 from domain import Patient, Observation, RiskAssessment
 from domain.risk_assessment import FeatureContribution
+from domain.scenario import Scenario
 from repositories import PatientRepository, ObservationRepository
 
 
@@ -260,4 +261,67 @@ class APIAdapter:
                 'description': 'Calculated index of renal filtration capacity from serum creatinine.',
                 'clinicalRelevance': 'Critical for staging renal health and monitoring microvascular strain.'
             }
+        }
+
+    @staticmethod
+    def scenario_to_react_format(scenario: Scenario, patient_external_id: str, baseline_risk: RiskAssessment) -> Dict[str, Any]:
+        """Transform Flask Scenario to React ScenarioSimulationResult format."""
+        # Build projected metrics from scenario modifications
+        projected_metrics = []
+        for feature_name, mod in scenario.modifications.items():
+            # Map Flask feature names to React metric keys
+            metric_key_map = {
+                'systolic_bp': 'systolic_bp',
+                'diastolic_bp': 'diastolic_bp',
+                'heart_rate': 'resting_heart_rate',
+                'glucose': 'fasting_glucose',
+                'hba1c': 'hba1c',
+                'ldl_cholesterol': 'ldl_cholesterol',
+                'hdl_cholesterol': 'hdl_cholesterol',
+                'total_cholesterol': 'total_cholesterol',
+                'bmi': 'bmi',
+                'egfr': 'egfr'
+            }
+
+            metric_key = metric_key_map.get(feature_name, feature_name)
+
+            if mod.original_value is not None and mod.modified_value is not None:
+                absolute_delta = mod.modified_value - mod.original_value
+                percent_delta = (absolute_delta / mod.original_value * 100) if mod.original_value != 0 else 0
+
+                projected_metrics.append({
+                    'metricKey': metric_key,
+                    'baselineValue': mod.original_value,
+                    'simulatedValue': mod.modified_value,
+                    'absoluteDelta': round(absolute_delta, 1),
+                    'percentDelta': round(percent_delta, 1),
+                    'unit': mod.unit,
+                    'clinicalSignificance': 'Hypothetical projection based on scenario simulation.'
+                })
+
+        # Build projected risk changes
+        baseline_score = baseline_risk.risk_score or 0
+        scenario_score = scenario.scenario_risk_score or 0
+        percent_reduction = ((baseline_score - scenario_score) / baseline_score * 100) if baseline_score > 0 else 0
+
+        projected_risk_changes = [
+            {
+                'assessmentType': 'Cardiovascular Risk',
+                'baselineScore': round(baseline_score * 100, 1),
+                'projectedScore': round(scenario_score * 100, 1),
+                'percentReduction': round(percent_reduction, 1)
+            }
+        ]
+
+        return {
+            'scenarioName': scenario.name,
+            'patientId': patient_external_id,
+            'projectedMetrics': projected_metrics,
+            'projectedRiskChanges': projected_risk_changes,
+            'evidenceCitations': [
+                {
+                    'study': 'Flask Scenario Engine',
+                    'finding': 'Rules-based simulation using patient baseline data and hypothetical modifications.'
+                }
+            ]
         }

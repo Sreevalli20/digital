@@ -626,6 +626,142 @@ def react_initialize_demo():
     }), 201
 
 
+@app.route('/api/react/patients/<external_id>/observations', methods=['POST'])
+def react_create_observation(external_id):
+    """Create a new observation for a patient in React format."""
+    # Find patient by external_id
+    patients = patient_repo.get_all()
+    patient = next((p for p in patients if p.external_id == external_id), None)
+
+    if not patient:
+        return jsonify({'error': 'Patient not found'}), 404
+
+    data = request.get_json()
+
+    # Map React metric_key to Flask observation_type
+    metric_key_map = {
+        'systolic_bp': 'systolic_bp',
+        'diastolic_bp': 'diastolic_bp',
+        'fasting_glucose': 'glucose',
+        'hba1c': 'hba1c',
+        'resting_heart_rate': 'heart_rate',
+        'ldl_cholesterol': 'ldl_cholesterol',
+        'hdl_cholesterol': 'hdl_cholesterol',
+        'total_cholesterol': 'total_cholesterol',
+        'bmi': 'bmi',
+        'egfr': 'egfr'
+    }
+
+    metric_key = data.get('metricKey')
+    observation_type = metric_key_map.get(metric_key, metric_key)
+
+    observation = Observation(
+        patient_id=patient.id,
+        observation_type=observation_type,
+        value=data.get('value'),
+        unit=data.get('unit'),
+        timestamp=datetime.fromisoformat(data.get('recordedAt')) if data.get('recordedAt') else datetime.utcnow(),
+        notes=data.get('contextNotes')
+    )
+
+    # Validate
+    is_valid, error = validator.validate(observation)
+    observation.is_valid = is_valid
+    observation.validation_error = error
+
+    if not is_valid:
+        return jsonify({'error': error}), 400
+
+    created = observation_repo.create(observation)
+    react_observation = APIAdapter.observation_to_react_format(created, external_id)
+
+    return jsonify(react_observation), 201
+
+
+@app.route('/api/react/patients/<external_id>/scenarios', methods=['POST'])
+def react_create_scenario(external_id):
+    """Create and run a scenario simulation for a patient in React format."""
+    # Find patient by external_id
+    patients = patient_repo.get_all()
+    patient = next((p for p in patients if p.external_id == external_id), None)
+
+    if not patient:
+        return jsonify({'error': 'Patient not found'}), 404
+
+    data = request.get_json()
+
+    # Map React adjustments to Flask scenario modifications
+    # For now, we'll implement a simplified scenario based on the Flask ScenarioEngine
+    # React sends lifestyle adjustments; we need to translate these to metric modifications
+
+    # Get baseline state and risk
+    baseline_state = twin_engine.compute_state(patient.id)
+    baseline_risk = prediction_engine.assess_risk(baseline_state)
+
+    # Create scenario
+    scenario = Scenario(
+        patient_id=patient.id,
+        name=data.get('scenarioName', 'Lifestyle Intervention'),
+        description=data.get('description', 'Simulated lifestyle intervention')
+    )
+
+    # Apply modifications based on React adjustments
+    adjustments = data.get('adjustments', {})
+
+    # Simple translation: use baseline values and apply estimated deltas
+    # This is a simplified implementation - the Flask ScenarioEngine expects direct feature modifications
+    # We'll estimate the modified values based on the adjustments
+
+    # For now, return a placeholder that indicates this needs more sophisticated mapping
+    # The Flask ScenarioEngine expects modifications in terms of direct feature values
+    # while React sends lifestyle interventions (activity, sodium, sleep, etc.)
+
+    # As a first pass, we'll use the suggest_improvements approach
+    suggestions = scenario_engine.suggest_improvements(baseline_state, baseline_risk)
+
+    # Apply suggested improvements as modifications
+    for feature_name, suggestion in suggestions.items():
+        scenario.add_modification(
+            feature_name=feature_name,
+            original_value=suggestion['current'],
+            modified_value=suggestion['suggested'],
+            unit=suggestion['unit']
+        )
+
+    # Run scenario
+    result = scenario_engine.run_scenario(scenario, baseline_state, baseline_risk)
+
+    # Convert to React format
+    react_result = APIAdapter.scenario_to_react_format(result, external_id, baseline_risk)
+
+    return jsonify(react_result), 201
+
+
+@app.route('/api/react/patients/<external_id>/export', methods=['GET'])
+def react_export_patient_data(external_id):
+    """Export patient data in React format."""
+    # Find patient by external_id
+    patients = patient_repo.get_all()
+    patient = next((p for p in patients if p.external_id == external_id), None)
+
+    if not patient:
+        return jsonify({'error': 'Patient not found'}), 404
+
+    format_type = request.args.get('format', 'csv')
+
+    if format_type == 'csv':
+        observations = observation_repo.get_by_patient(patient.id)
+        csv_content = evidence_exporter.export_csv(observations)
+        return send_file(
+            io.BytesIO(csv_content.encode('utf-8')),
+            mimetype='text/csv',
+            as_attachment=True,
+            download_name=f'{external_id}_observations.csv'
+        )
+    else:
+        return jsonify({'error': 'Invalid format. Use csv.'}), 400
+
+
 # Error handlers
 @app.errorhandler(404)
 def not_found(error):

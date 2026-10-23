@@ -103,7 +103,7 @@ export const ScenarioSimulatorView: React.FC<ScenarioSimulatorViewProps> = ({
             Hypothetical Twin Projection — Research Sandbox
           </strong>
           <span>
-            Simulated outcomes are mathematical directional estimates based on clinical trial meta-analyses (DASH, Diabetes Prevention Program, and Look AHEAD). These are hypothetical projections for lifestyle planning, <strong>not guaranteed clinical outcomes or diagnostic prescriptions</strong>.
+            Simulated outcomes are mathematical directional estimates based on clinical trial meta-analyses (DASH, Diabetes Prevention Program, and Look AHEAD). These are hypothetical projections for lifestyle planning, <strong>not guaranteed clinical outcomes or diagnostic prescriptions</strong>. <em>Note: Client-side calculation using observed patient data.</em>
           </span>
         </div>
       </div>

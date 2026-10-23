@@ -1,10 +1,7 @@
 import React, { useState } from 'react';
 import { Observation, PatientProfile } from '../../types/health';
-import {
-  generateCsvExport,
-  parseAndValidateCsv,
-  METRIC_DEFINITIONS
-} from '../../data/mockData';
+import { METRIC_DEFINITIONS } from '../../data/mockData';
+import { apiClient } from '../../api/client';
 import {
   Download,
   Upload,
@@ -15,7 +12,8 @@ import {
   Database,
   FileCheck2,
   Copy,
-  Check
+  Check,
+  Loader2
 } from 'lucide-react';
 
 interface DataImportExportViewProps {
@@ -36,6 +34,7 @@ export const DataImportExportView: React.FC<DataImportExportViewProps> = ({
   const [importedPreview, setImportedPreview] = useState<Observation[] | null>(null);
   const [importErrors, setImportErrors] = useState<string[]>([]);
   const [importSuccessMsg, setImportSuccessMsg] = useState<string | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
 
   // Sample CSV text that can be pasted or imported
   const [customCsvInput, setCustomCsvInput] = useState<string>(
@@ -50,39 +49,63 @@ export const DataImportExportView: React.FC<DataImportExportViewProps> = ({
       ? observations.filter((o) => o.patientId === activePatientId)
       : observations;
 
-  const handleDownloadCsv = () => {
-    const csvContent = generateCsvExport(exportObservations);
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute(
-      'download',
-      `swasthya_twin_${selectedExportScope === 'current' ? activePatientId : 'all_cohort'}_${new Date().toISOString().split('T')[0]}.csv`
-    );
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const handleDownloadCsv = async () => {
+    setIsExporting(true);
+    try {
+      const blob = await apiClient.exportPatientData(activePatientId, 'csv');
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute(
+        'download',
+        `swasthya_twin_${selectedExportScope === 'current' ? activePatientId : 'all_cohort'}_${new Date().toISOString().split('T')[0]}.csv`
+      );
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Failed to export CSV:', err);
+      setImportErrors(['Failed to export data from backend. Please try again.']);
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const handleValidateCsv = () => {
     setImportSuccessMsg(null);
-    const result = parseAndValidateCsv(customCsvInput);
-    if (!result.success) {
-      setImportErrors(result.errors);
+    // Client-side validation only - actual import would require backend CSV upload endpoint
+    // For now, we'll do basic CSV parsing validation
+    const lines = customCsvInput.split(/\r?\n/).filter((l) => l.trim().length > 0);
+    if (lines.length < 2) {
+      setImportErrors(['CSV file is empty or missing data rows.']);
+      setImportedPreview(null);
+      return;
+    }
+
+    const headerLine = lines[0].toLowerCase();
+    const requiredCols = ['patient_id', 'recorded_at', 'metric_key', 'value'];
+    const errors: string[] = [];
+    for (const col of requiredCols) {
+      if (!headerLine.includes(col)) {
+        errors.push(`Missing mandatory column header: ${col}`);
+      }
+    }
+
+    if (errors.length > 0) {
+      setImportErrors(errors);
       setImportedPreview(null);
     } else {
-      setImportErrors(result.errors);
-      setImportedPreview(result.records);
+      setImportErrors([]);
+      setImportSuccessMsg('CSV schema validated. Note: Actual import requires backend file upload endpoint (not yet implemented).');
     }
   };
 
   const handleCommitImport = () => {
-    if (importedPreview && importedPreview.length > 0) {
-      onImportObservations(importedPreview);
-      setImportSuccessMsg(`Successfully imported ${importedPreview.length} observations into the longitudinal twin ledger.`);
-      setImportedPreview(null);
-    }
+    // This would require a backend file upload endpoint
+    // For now, show a message that this is not yet fully implemented
+    setImportSuccessMsg('CSV import requires backend file upload endpoint. Please use the Flask dashboard for CSV uploads.');
+    setImportedPreview(null);
   };
 
   const handleCopyFhirJson = () => {
@@ -206,10 +229,20 @@ export const DataImportExportView: React.FC<DataImportExportViewProps> = ({
 
             <button
               onClick={handleDownloadCsv}
-              className="flex items-center gap-1.5 text-xs font-semibold text-white bg-teal-800 hover:bg-teal-900 px-4 py-2 rounded transition-colors shadow-2xs"
+              disabled={isExporting}
+              className="flex items-center gap-1.5 text-xs font-semibold text-white bg-teal-800 hover:bg-teal-900 px-4 py-2 rounded transition-colors shadow-2xs disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <Download className="w-3.5 h-3.5" />
-              <span>Download CSV File</span>
+              {isExporting ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <span>Exporting...</span>
+                </>
+              ) : (
+                <>
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Download CSV File</span>
+                </>
+              )}
             </button>
           </div>
         </div>

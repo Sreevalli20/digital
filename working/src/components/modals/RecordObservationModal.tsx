@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Observation, MetricKey, PatientProfile } from '../../types/health';
 import { METRIC_DEFINITIONS } from '../../data/mockData';
-import { X, CheckCircle, AlertCircle } from 'lucide-react';
+import { apiClient } from '../../api/client';
+import { X, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 
 interface RecordObservationModalProps {
   isOpen: boolean;
@@ -25,12 +26,13 @@ export const RecordObservationModal: React.FC<RecordObservationModalProps> = ({
   const [notes, setNotes] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (!isOpen) return null;
 
   const currentDef = METRIC_DEFINITIONS[selectedMetric];
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
@@ -55,26 +57,31 @@ export const RecordObservationModal: React.FC<RecordObservationModalProps> = ({
       return;
     }
 
-    const newObs: Observation = {
-      id: `obs-manual-${Date.now()}`,
-      patientId: selectedPatientId,
-      recordedAt: date,
-      metricKey: selectedMetric,
-      value: Number(numVal.toFixed(currentDef.decimals)),
-      unit: currentDef.unit,
-      category: currentDef.category,
-      contextNotes: notes.trim() || undefined,
-      isSynthetic: true
-    };
+    setIsSubmitting(true);
 
-    onAddObservation(newObs);
-    setSuccessMsg(true);
-    setTimeout(() => {
-      setSuccessMsg(false);
-      onClose();
-      setValue('');
-      setNotes('');
-    }, 600);
+    try {
+      const newObs = await apiClient.createObservation(selectedPatientId, {
+        metricKey: selectedMetric,
+        value: Number(numVal.toFixed(currentDef.decimals)),
+        unit: currentDef.unit,
+        recordedAt: date,
+        contextNotes: notes.trim() || undefined,
+      });
+
+      onAddObservation(newObs);
+      setSuccessMsg(true);
+      setTimeout(() => {
+        setSuccessMsg(false);
+        onClose();
+        setValue('');
+        setNotes('');
+      }, 600);
+    } catch (err) {
+      console.error('Failed to create observation:', err);
+      setError('Failed to save observation to backend. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -218,9 +225,17 @@ export const RecordObservationModal: React.FC<RecordObservationModalProps> = ({
             </button>
             <button
               type="submit"
-              className="px-4 py-2 text-xs font-medium text-white bg-teal-800 hover:bg-teal-900 rounded transition-colors shadow-xs"
+              disabled={isSubmitting}
+              className="px-4 py-2 text-xs font-medium text-white bg-teal-800 hover:bg-teal-900 rounded transition-colors shadow-xs disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
-              Commit Observation
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <span>Saving...</span>
+                </>
+              ) : (
+                'Commit Observation'
+              )}
             </button>
           </div>
         </form>

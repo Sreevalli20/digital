@@ -113,6 +113,33 @@ class APIClient {
       method: 'POST',
     });
   }
+
+  async createObservation(patientId: string, observation: Partial<Observation>): Promise<Observation> {
+    return this.fetch<Observation>(`/patients/${patientId}/observations`, {
+      method: 'POST',
+      body: JSON.stringify(observation),
+    });
+  }
+
+  async createScenario(patientId: string, scenarioData: {
+    scenarioName?: string;
+    description?: string;
+    adjustments?: any;
+  }): Promise<any> {
+    return this.fetch(`/patients/${patientId}/scenarios`, {
+      method: 'POST',
+      body: JSON.stringify(scenarioData),
+    });
+  }
+
+  async exportPatientData(patientId: string, format: string = 'csv'): Promise<Blob> {
+    const url = `${this.baseUrl}/patients/${patientId}/export?format=${format}`;
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status} ${response.statusText}`);
+    }
+    return response.blob();
+  }
 }
 
 export const apiClient = new APIClient();
