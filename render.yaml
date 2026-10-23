@@ -3,6 +3,7 @@ services:
     name: swasthya-twin
     runtime: python
     plan: free
+    # Build React frontend with Vite base path /app/, then copy to static folder
     buildCommand: pip install -r requirements.txt && cd working && npm install && npm run build && cd .. && rm -rf static && cp -r working/dist static
     startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --threads 4
     envVars:
