@@ -3,66 +3,16 @@
  * Connects React UI to Flask API endpoints
  */
 
-const API_BASE_URL = '/api/react';
+import type {
+  PatientProfile,
+  Observation,
+  RiskAssessment,
+  MetricDefinition,
+  MetricKey
+} from '../types/health';
 
-export interface PatientProfile {
-  id: string;
-  birthYear: number;
-  sexAtBirth: 'Female' | 'Male';
-  monitoringStatus: string;
-  primaryFocus: string;
-  enrolledDate: string;
-  baselineWindowDays: number;
-  smokerStatus: string;
-  notes: string;
-}
-
-export interface Observation {
-  id: string;
-  patientId: string;
-  recordedAt: string;
-  metricKey: string;
-  value: number;
-  unit: string;
-  category: string;
-  contextNotes?: string;
-  isSynthetic: boolean;
-}
-
-export interface RiskAssessment {
-  id: string;
-  patientId: string;
-  assessmentType: string;
-  title: string;
-  category: string;
-  scorePercent: number;
-  classification: string;
-  methodologyDescription: string;
-  contributingFactors: Array<{
-    factor: string;
-    contributionPercent: number;
-    observedValue: string;
-    baselineComparison: string;
-    impactLevel: string;
-  }>;
-  missingInputs: string[];
-  dataCompletenessPercent: number;
-  clinicalDisclaimer: string;
-}
-
-export interface MetricDefinition {
-  key: string;
-  label: string;
-  shortLabel: string;
-  unit: string;
-  category: string;
-  normalMin: number;
-  normalMax: number;
-  optimalTarget: string;
-  decimals: number;
-  description: string;
-  clinicalRelevance: string;
-}
+// Use environment variable for backend URL, fallback to production Render URL
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://swasthya-twin.onrender.com/api/react';
 
 class APIClient {
   private baseUrl: string;

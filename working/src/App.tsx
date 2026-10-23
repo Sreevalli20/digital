@@ -15,7 +15,7 @@ import { DataImportExportView } from './components/views/DataImportExportView';
 import { EvidenceReportsView } from './components/views/EvidenceReportsView';
 import { ProjectInfoFlaskGuide } from './components/views/ProjectInfoFlaskGuide';
 import { RecordObservationModal } from './components/modals/RecordObservationModal';
-import { apiClient, PatientProfile as APIPatient, Observation as APIObservation } from './api/client';
+import { apiClient } from './api/client';
 
 export default function App() {
   const [currentTab, setCurrentTab] = useState<NavTabId>('overview');
