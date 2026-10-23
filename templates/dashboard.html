@@ -343,6 +343,13 @@
         </div>
     </div>
 </div>
+
+<noscript>
+    <div class="alert alert-danger" style="margin: 2rem;">
+        <strong>JavaScript Required</strong><br>
+        This application requires JavaScript to function. Please enable JavaScript in your browser settings.
+    </div>
+</noscript>
 {% endblock %}
 
 {% block extra_js %}
@@ -351,16 +358,27 @@ let currentPatientId = null;
 let currentPatient = null;
 let patientData = {};
 
-document.addEventListener('DOMContentLoaded', loadPatients);
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Dashboard loaded, initializing...');
+    loadPatients();
+});
 
 async function loadPatients() {
+    console.log('Loading patients...');
     try {
         const response = await fetch('/api/patients');
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
         const patients = await response.json();
+        console.log('Patients loaded:', patients.length);
 
         const grid = document.getElementById('patientGrid');
+        const dashboard = document.getElementById('patientDashboard');
+        const selector = document.getElementById('patientSelector');
 
         if (patients.length === 0) {
+            console.log('No patients found, showing demo initialization');
             grid.innerHTML = `
                 <div class="empty-state" style="grid-column: 1 / -1;">
                     <div class="empty-state-icon">📊</div>
@@ -371,13 +389,16 @@ async function loadPatients() {
                     </button>
                 </div>
             `;
+            if (dashboard) dashboard.style.display = 'none';
+            if (selector) selector.style.display = 'block';
             return;
         }
 
+        console.log('Rendering patient cards');
         grid.innerHTML = patients.map(p => `
             <div class="patient-card" onclick="selectPatient(${p.id})" data-id="${p.id}">
                 <div class="patient-card-id">ID: ${p.id}</div>
-                <div class="patient-card-name">${p.external_id || `DEMO-${String(p.id).padStart(3, '0')}`}</div>
+                <div class="patient-card-name">${p.external_id || p.full_name || `DEMO-${String(p.id).padStart(3, '0')}`}</div>
                 <div class="patient-card-meta">
                     ${p.age ? `Age: ${p.age}` : ''} ${p.gender ? `| ${p.gender}` : ''}
                 </div>
@@ -387,21 +408,27 @@ async function loadPatients() {
 
         // Auto-select the first patient (demo patient)
         if (patients.length > 0) {
+            console.log('Auto-selecting first patient:', patients[0].id);
             await selectPatient(patients[0].id);
         }
     } catch (error) {
         console.error('Error loading patients:', error);
-        document.getElementById('patientGrid').innerHTML = `
-            <div class="alert alert-danger" style="grid-column: 1 / -1;">
-                Error loading patients. Please refresh the page.
-            </div>
-        `;
+        const grid = document.getElementById('patientGrid');
+        if (grid) {
+            grid.innerHTML = `
+                <div class="alert alert-danger" style="grid-column: 1 / -1;">
+                    Error loading patients. Please refresh the page.
+                </div>
+            `;
+        }
     }
 }
 
 function showPatientSelector() {
-    document.getElementById('patientDashboard').style.display = 'none';
-    document.getElementById('patientSelector').style.display = 'block';
+    const dashboard = document.getElementById('patientDashboard');
+    const selector = document.getElementById('patientSelector');
+    if (dashboard) dashboard.style.display = 'none';
+    if (selector) selector.style.display = 'block';
     currentPatientId = null;
     currentPatient = null;
 }
@@ -418,8 +445,10 @@ async function selectPatient(patientId) {
     });
 
     // Hide patient selector, show dashboard
-    document.getElementById('patientSelector').style.display = 'none';
-    document.getElementById('patientDashboard').style.display = 'block';
+    const dashboard = document.getElementById('patientDashboard');
+    const selector = document.getElementById('patientSelector');
+    if (selector) selector.style.display = 'none';
+    if (dashboard) dashboard.style.display = 'block';
 
     // Load patient data
     await loadPatientData();
@@ -431,18 +460,29 @@ async function loadPatientData() {
     try {
         // Load patient details
         const patientResponse = await fetch(`/api/patients/${currentPatientId}`);
+        if (!patientResponse.ok) {
+            throw new Error(`HTTP error! status: ${patientResponse.status}`);
+        }
         currentPatient = await patientResponse.json();
 
         // Update subtitle
         const subtitle = document.getElementById('patientSubtitle');
-        subtitle.textContent = `${currentPatient.external_id || `DEMO-${String(currentPatient.id).padStart(3, '0')}`} ${currentPatient.is_synthetic ? '(Synthetic Demo Data)' : ''}`;
+        if (subtitle) {
+            subtitle.textContent = `${currentPatient.external_id || `DEMO-${String(currentPatient.id).padStart(3, '0')}`} ${currentPatient.is_synthetic ? '(Synthetic Demo Data)' : ''}`;
+        }
 
         // Load twin state
         const stateResponse = await fetch(`/api/patients/${currentPatientId}/twin-state`);
+        if (!stateResponse.ok) {
+            throw new Error(`HTTP error! status: ${stateResponse.status}`);
+        }
         const state = await stateResponse.json();
 
         // Load observations
         const obsResponse = await fetch(`/api/patients/${currentPatientId}/observations`);
+        if (!obsResponse.ok) {
+            throw new Error(`HTTP error! status: ${obsResponse.status}`);
+        }
         const observations = await obsResponse.json();
 
         // Update UI
@@ -457,7 +497,8 @@ async function loadPatientData() {
 
 function updateMetrics(state, observations) {
     const grid = document.getElementById('metricsGrid');
-    
+    if (!grid) return;
+
     if (!state.features || Object.keys(state.features).length === 0) {
         grid.innerHTML = `
             <div class="empty-state" style="grid-column: 1 / -1;">
@@ -468,7 +509,7 @@ function updateMetrics(state, observations) {
         `;
         return;
     }
-    
+
     const metricLabels = {
         'heart_rate': 'Resting Heart Rate',
         'systolic_bp': 'Systolic Blood Pressure',
@@ -478,7 +519,7 @@ function updateMetrics(state, observations) {
         'activity_minutes': 'Physical Activity',
         'sleep_hours': 'Sleep Duration'
     };
-    
+
     const metricUnits = {
         'heart_rate': 'bpm',
         'systolic_bp': 'mmHg',
@@ -488,9 +529,9 @@ function updateMetrics(state, observations) {
         'activity_minutes': 'min',
         'sleep_hours': 'hrs'
     };
-    
+
     const cards = [];
-    
+
     // Add observation count card
     cards.push(`
         <div class="metric-card">
@@ -499,7 +540,7 @@ function updateMetrics(state, observations) {
             <div class="metric-meta">Recorded measurements</div>
         </div>
     `);
-    
+
     // Add data quality card
     cards.push(`
         <div class="metric-card">
@@ -508,14 +549,14 @@ function updateMetrics(state, observations) {
             <div class="metric-meta">Completeness: ${(state.completeness_score * 100).toFixed(0)}%</div>
         </div>
     `);
-    
+
     // Add feature cards for available measurements
     Object.entries(state.features).forEach(([name, feature]) => {
         if (feature.current_value !== null && feature.observation_count > 0) {
             const label = metricLabels[name] || name.replace(/_/g, ' ').toUpperCase();
             const unit = metricUnits[name] || '';
             const change = feature.change_from_baseline;
-            
+
             let trendHtml = '';
             if (change !== null) {
                 const trendClass = change > 0 ? 'positive' : change < 0 ? 'negative' : 'neutral';
@@ -527,7 +568,7 @@ function updateMetrics(state, observations) {
                     </div>
                 `;
             }
-            
+
             cards.push(`
                 <div class="metric-card">
                     <div class="metric-label">${label}</div>
@@ -536,21 +577,24 @@ function updateMetrics(state, observations) {
                     </div>
                     ${trendHtml}
                     <div class="metric-meta">
-                        ${feature.observation_count} observations | 
+                        ${feature.observation_count} observations |
                         Baseline: ${feature.baseline_value !== null ? feature.baseline_value.toFixed(1) : 'N/A'}
                     </div>
                 </div>
             `);
         }
     });
-    
+
     grid.innerHTML = cards.join('');
 }
 
 function updateChart(observations) {
     const chart = document.getElementById('trendChart');
-    const measurement = document.getElementById('measurementSelect').value;
-    
+    const select = document.getElementById('measurementSelect');
+    if (!chart || !select) return;
+
+    const measurement = select.value;
+
     if (!observations || observations.length === 0) {
         chart.innerHTML = `
             <div class="empty-state">
@@ -561,13 +605,13 @@ function updateChart(observations) {
         `;
         return;
     }
-    
+
     // Filter observations by selected measurement
     const filteredObs = observations
         .filter(obs => obs.observation_type === measurement)
         .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
         .slice(-30); // Last 30 observations
-    
+
     if (filteredObs.length === 0) {
         chart.innerHTML = `
             <div class="empty-state">
@@ -578,7 +622,7 @@ function updateChart(observations) {
         `;
         return;
     }
-    
+
     // Find min and max for scaling
     const values = filteredObs.map(obs => obs.value).filter(v => v !== null);
     if (values.length === 0) {
@@ -591,19 +635,19 @@ function updateChart(observations) {
         `;
         return;
     }
-    
+
     const minVal = Math.min(...values);
     const maxVal = Math.max(...values);
     const range = maxVal - minVal || 1;
-    
+
     chart.innerHTML = filteredObs.map(obs => {
         if (obs.value === null) {
             return `<div class="chart-bar" style="height: 4px; background: var(--gray-300);"></div>`;
         }
-        
+
         const height = ((obs.value - minVal) / range) * 100;
         const date = new Date(obs.timestamp).toLocaleDateString();
-        
+
         return `
             <div class="chart-bar" style="height: ${Math.max(height, 4)}%;">
                 <div class="chart-bar-tooltip">
@@ -617,7 +661,8 @@ function updateChart(observations) {
 
 function updateActivity(observations) {
     const list = document.getElementById('activityList');
-    
+    if (!list) return;
+
     if (!observations || observations.length === 0) {
         list.innerHTML = `
             <div class="empty-state">
@@ -628,11 +673,11 @@ function updateActivity(observations) {
         `;
         return;
     }
-    
+
     const recentObs = observations
         .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
         .slice(0, 10);
-    
+
     list.innerHTML = recentObs.map(obs => `
         <li class="activity-item">
             <div class="activity-type">
@@ -649,6 +694,8 @@ function updateActivity(observations) {
 async function initializeDemo() {
     try {
         const grid = document.getElementById('patientGrid');
+        if (!grid) return;
+
         grid.innerHTML = `
             <div class="loading" style="grid-column: 1 / -1;">
                 <div class="loading-spinner"></div>
@@ -663,11 +710,7 @@ async function initializeDemo() {
 
         if (response.ok) {
             const result = await response.json();
-            if (result.created) {
-                loadPatients();
-            } else {
-                loadPatients();
-            }
+            loadPatients();
         } else {
             const error = await response.json();
             grid.innerHTML = `
@@ -678,11 +721,14 @@ async function initializeDemo() {
         }
     } catch (error) {
         console.error('Error initializing demo:', error);
-        document.getElementById('patientGrid').innerHTML = `
-            <div class="alert alert-danger" style="grid-column: 1 / -1;">
-                Error initializing demo. Please refresh the page and try again.
-            </div>
-        `;
+        const grid = document.getElementById('patientGrid');
+        if (grid) {
+            grid.innerHTML = `
+                <div class="alert alert-danger" style="grid-column: 1 / -1;">
+                    Error initializing demo. Please refresh the page and try again.
+                </div>
+            `;
+        }
     }
 }
 

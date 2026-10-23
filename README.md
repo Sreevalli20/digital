@@ -318,6 +318,16 @@ python scripts/evaluate.py
 
 **Important:** Render free tier has ephemeral filesystem. Data will reset on redeploy. Use the reset and backup endpoints for demo data management.
 
+**SQLite Persistence Limitations:**
+- The SQLite database file is stored in the Render free tier filesystem, which is ephemeral
+- Database data persists during the application's runtime but may be reset on:
+  - Application redeployment
+  - Render service restart
+  - Render infrastructure changes
+- For the public demo, synthetic data is auto-initialized on first load
+- For production use, migrate to PostgreSQL or other persistent storage
+- Use the `/api/database/backup` endpoint to create manual backups when needed
+
 ### Manual Deployment
 
 ```bash

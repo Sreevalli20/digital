@@ -98,7 +98,7 @@ def demo():
 @app.route('/patients')
 def patients():
     """Patient profiles page."""
-    return render_template('demo.html')
+    return render_template('dashboard.html')
 
 
 @app.route('/trends')
@@ -110,19 +110,19 @@ def trends():
 @app.route('/risk')
 def risk():
     """Risk insights page."""
-    return render_template('demo.html')
+    return render_template('dashboard.html')
 
 
 @app.route('/scenarios')
 def scenarios():
     """Scenario simulator page."""
-    return render_template('demo.html')
+    return render_template('dashboard.html')
 
 
 @app.route('/data')
 def data():
     """Data and imports page."""
-    return render_template('demo.html')
+    return render_template('dashboard.html')
 
 
 @app.route('/about')
