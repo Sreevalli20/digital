@@ -53,7 +53,23 @@ def allowed_file(filename):
 
 @app.route('/')
 def index():
-    """Main dashboard."""
+    """Main dashboard - auto-initialize demo if database is empty."""
+    # Check if database is empty (no patients)
+    patients = patient_repo.get_all()
+    if len(patients) == 0:
+        # Auto-initialize demo with synthetic patient
+        patient = synthetic_generator.generate_patient(is_synthetic=True, use_demo_name=True, external_id="DEMO-001")
+        observations = synthetic_generator.generate_observations(None, days_back=90, daily=True)
+
+        # Save to database
+        created_patient = patient_repo.create(patient)
+
+        # Set patient_id for observations
+        for obs in observations:
+            obs.patient_id = created_patient.id
+
+        created_observations = observation_repo.create_batch(observations)
+
     return render_template('dashboard.html')
 
 
@@ -430,28 +446,65 @@ def generate_synthetic_data():
     """Generate synthetic patient data."""
     data = request.get_json()
     patient_type = data.get('type', 'normal')  # 'normal', 'high_risk', 'low_risk'
-    
+    use_demo_name = data.get('use_demo_name', True)  # Use DEMO-001 by default
+
     if patient_type == 'high_risk':
         patient, observations = synthetic_generator.generate_high_risk_patient(None)
     elif patient_type == 'low_risk':
         patient, observations = synthetic_generator.generate_low_risk_patient(None)
     else:
-        patient = synthetic_generator.generate_patient(is_synthetic=True)
+        patient = synthetic_generator.generate_patient(is_synthetic=True, use_demo_name=use_demo_name)
         observations = synthetic_generator.generate_observations(None, days_back=90)
-    
+
     # Save to database
     created_patient = patient_repo.create(patient)
-    
+
     # Set patient_id for observations
     for obs in observations:
         obs.patient_id = created_patient.id
-    
+
     created_observations = observation_repo.create_batch(observations)
-    
+
     return jsonify({
         'patient': created_patient.to_dict(),
         'observations_count': len(created_observations),
         'patient_id': created_patient.id
+    }), 201
+
+
+@app.route('/api/demo/initialize', methods=['POST'])
+def initialize_demo():
+    """Initialize demo workspace with synthetic patient if database is empty."""
+    # Check if any patients exist
+    patients = patient_repo.get_all()
+
+    if len(patients) > 0:
+        # Return existing patients without creating new ones
+        return jsonify({
+            'message': 'Demo already initialized',
+            'patients': [p.to_dict() for p in patients],
+            'created': False
+        }), 200
+
+    # Generate demo patient with DEMO-001 identifier
+    patient = synthetic_generator.generate_patient(is_synthetic=True, use_demo_name=True, external_id="DEMO-001")
+    observations = synthetic_generator.generate_observations(None, days_back=90, daily=True)
+
+    # Save to database
+    created_patient = patient_repo.create(patient)
+
+    # Set patient_id for observations
+    for obs in observations:
+        obs.patient_id = created_patient.id
+
+    created_observations = observation_repo.create_batch(observations)
+
+    return jsonify({
+        'message': 'Demo initialized successfully',
+        'patient': created_patient.to_dict(),
+        'observations_count': len(created_observations),
+        'patient_id': created_patient.id,
+        'created': True
     }), 201
 
 

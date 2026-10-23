@@ -7,19 +7,24 @@
 {% block extra_css %}
 <style>
     .dashboard-header {
-        margin-bottom: 2rem;
+        margin-bottom: 1.5rem;
     }
-    
+
     .dashboard-title {
-        font-size: 1.75rem;
+        font-size: 1.5rem;
         font-weight: 600;
         color: var(--gray-800);
         margin-bottom: 0.5rem;
     }
-    
+
     .dashboard-subtitle {
         color: var(--gray-500);
-        font-size: 1rem;
+        font-size: 0.875rem;
+    }
+
+    .demo-actions {
+        display: flex;
+        gap: 0.5rem;
     }
     
     .metrics-grid {
@@ -269,29 +274,29 @@
 {% endblock %}
 
 {% block content %}
-<div class="dashboard-header">
-    <h1 class="dashboard-title">Welcome to Swasthya Twin</h1>
-    <p class="dashboard-subtitle">Explore personal health trends, understand screening indicators, and investigate hypothetical changes.</p>
-</div>
-
-<div class="patient-selector">
-    <h2 style="color: var(--gray-800); margin-bottom: 1rem; font-size: 1.25rem;">Select Patient Profile</h2>
-    <div id="patientGrid" class="patient-grid">
-        <div class="loading">
-            <div class="loading-spinner"></div>
-            Loading patients...
+<div id="patientDashboard" style="display: none;">
+    <div class="dashboard-header">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <div>
+                <button class="btn btn-outline btn-sm" onclick="showPatientSelector()" style="margin-bottom: 0.5rem;">← Change Patient</button>
+                <h1 class="dashboard-title">Digital Twin Dashboard</h1>
+                <p class="dashboard-subtitle" id="patientSubtitle">Loading patient information...</p>
+            </div>
+            <div class="demo-actions">
+                <button class="btn btn-outline btn-sm" onclick="window.location.href='/patients'">Patient Profiles</button>
+                <button class="btn btn-outline btn-sm" onclick="window.location.href='/risk'">Risk Insights</button>
+                <button class="btn btn-outline btn-sm" onclick="window.location.href='/scenarios'">Scenario Simulator</button>
+            </div>
         </div>
     </div>
-</div>
 
-<div id="patientDashboard" style="display: none;">
     <div class="metrics-grid" id="metricsGrid">
         <div class="loading">
             <div class="loading-spinner"></div>
             Loading metrics...
         </div>
     </div>
-    
+
     <div class="dashboard-grid">
         <div class="chart-container">
             <div class="chart-header">
@@ -314,7 +319,7 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="chart-container">
             <div class="chart-header">
                 <h3 class="chart-title">Recent Activity</h3>
@@ -325,6 +330,16 @@
                     Loading activity...
                 </div>
             </ul>
+        </div>
+    </div>
+</div>
+
+<div class="patient-selector" id="patientSelector">
+    <h2 style="color: var(--gray-800); margin-bottom: 1rem; font-size: 1.25rem;">Patient Profiles</h2>
+    <div id="patientGrid" class="patient-grid">
+        <div class="loading">
+            <div class="loading-spinner"></div>
+            Loading patients...
         </div>
     </div>
 </div>
@@ -342,23 +357,23 @@ async function loadPatients() {
     try {
         const response = await fetch('/api/patients');
         const patients = await response.json();
-        
+
         const grid = document.getElementById('patientGrid');
-        
+
         if (patients.length === 0) {
             grid.innerHTML = `
                 <div class="empty-state" style="grid-column: 1 / -1;">
-                    <div class="empty-state-icon">👤</div>
-                    <div class="empty-state-title">No patients found</div>
-                    <div class="empty-state-text">Generate a synthetic patient to get started</div>
-                    <button class="btn btn-primary" style="margin-top: 1rem;" onclick="generateSyntheticPatient()">
-                        Generate Synthetic Patient
+                    <div class="empty-state-icon">📊</div>
+                    <div class="empty-state-title">Explore Demo Dashboard</div>
+                    <div class="empty-state-text">Initialize a synthetic demonstration workspace to explore health trends, risk insights, and scenario simulations.</div>
+                    <button class="btn btn-primary" style="margin-top: 1.5rem;" onclick="initializeDemo()">
+                        Initialize Demo Workspace
                     </button>
                 </div>
             `;
             return;
         }
-        
+
         grid.innerHTML = patients.map(p => `
             <div class="patient-card" onclick="selectPatient(${p.id})" data-id="${p.id}">
                 <div class="patient-card-id">ID: ${p.id}</div>
@@ -366,13 +381,13 @@ async function loadPatients() {
                 <div class="patient-card-meta">
                     ${p.age ? `Age: ${p.age}` : ''} ${p.gender ? `| ${p.gender}` : ''}
                 </div>
-                ${p.is_synthetic ? '<span class="patient-card-badge">Synthetic</span>' : ''}
+                ${p.is_synthetic ? '<span class="patient-card-badge">Synthetic Demo Data</span>' : ''}
             </div>
         `).join('');
-        
-        // Auto-select first patient if available
+
+        // Auto-select the first patient (demo patient)
         if (patients.length > 0) {
-            selectPatient(patients[0].id);
+            await selectPatient(patients[0].id);
         }
     } catch (error) {
         console.error('Error loading patients:', error);
@@ -384,9 +399,16 @@ async function loadPatients() {
     }
 }
 
+function showPatientSelector() {
+    document.getElementById('patientDashboard').style.display = 'none';
+    document.getElementById('patientSelector').style.display = 'block';
+    currentPatientId = null;
+    currentPatient = null;
+}
+
 async function selectPatient(patientId) {
     currentPatientId = patientId;
-    
+
     // Update UI
     document.querySelectorAll('.patient-card').forEach(card => {
         card.classList.remove('active');
@@ -394,35 +416,40 @@ async function selectPatient(patientId) {
             card.classList.add('active');
         }
     });
-    
-    // Show dashboard
+
+    // Hide patient selector, show dashboard
+    document.getElementById('patientSelector').style.display = 'none';
     document.getElementById('patientDashboard').style.display = 'block';
-    
+
     // Load patient data
     await loadPatientData();
 }
 
 async function loadPatientData() {
     if (!currentPatientId) return;
-    
+
     try {
         // Load patient details
         const patientResponse = await fetch(`/api/patients/${currentPatientId}`);
         currentPatient = await patientResponse.json();
-        
+
+        // Update subtitle
+        const subtitle = document.getElementById('patientSubtitle');
+        subtitle.textContent = `${currentPatient.external_id || `DEMO-${String(currentPatient.id).padStart(3, '0')}`} ${currentPatient.is_synthetic ? '(Synthetic Demo Data)' : ''}`;
+
         // Load twin state
         const stateResponse = await fetch(`/api/patients/${currentPatientId}/twin-state`);
         const state = await stateResponse.json();
-        
+
         // Load observations
         const obsResponse = await fetch(`/api/patients/${currentPatientId}/observations`);
         const observations = await obsResponse.json();
-        
+
         // Update UI
         updateMetrics(state, observations);
         updateChart(observations);
         updateActivity(observations);
-        
+
     } catch (error) {
         console.error('Error loading patient data:', error);
     }
@@ -619,14 +646,54 @@ function updateActivity(observations) {
     `).join('');
 }
 
+async function initializeDemo() {
+    try {
+        const grid = document.getElementById('patientGrid');
+        grid.innerHTML = `
+            <div class="loading" style="grid-column: 1 / -1;">
+                <div class="loading-spinner"></div>
+                Initializing demo workspace...
+            </div>
+        `;
+
+        const response = await fetch('/api/demo/initialize', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+        if (response.ok) {
+            const result = await response.json();
+            if (result.created) {
+                loadPatients();
+            } else {
+                loadPatients();
+            }
+        } else {
+            const error = await response.json();
+            grid.innerHTML = `
+                <div class="alert alert-danger" style="grid-column: 1 / -1;">
+                    Error initializing demo: ${error.error || 'Unknown error'}
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Error initializing demo:', error);
+        document.getElementById('patientGrid').innerHTML = `
+            <div class="alert alert-danger" style="grid-column: 1 / -1;">
+                Error initializing demo. Please refresh the page and try again.
+            </div>
+        `;
+    }
+}
+
 async function generateSyntheticPatient() {
     try {
         const response = await fetch('/api/synthetic/generate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ type: 'normal' })
+            body: JSON.stringify({ type: 'normal', use_demo_name: true })
         });
-        
+
         if (response.ok) {
             const result = await response.json();
             loadPatients();

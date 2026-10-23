@@ -22,16 +22,32 @@ class SyntheticDataGenerator:
         if seed is not None:
             random.seed(seed)
     
-    def generate_patient(self, is_synthetic: bool = True, 
-                        external_id: Optional[str] = None) -> Patient:
-        """Generate a synthetic patient."""
-        patient = Patient(
-            external_id=external_id or f"synthetic_{random.randint(1000, 9999)}",
-            first_name=random.choice(self.FIRST_NAMES),
-            last_name=random.choice(self.LAST_NAMES),
-            gender=random.choice(list(Gender)),
-            is_synthetic=is_synthetic
-        )
+    def generate_patient(self, is_synthetic: bool = True,
+                        external_id: Optional[str] = None,
+                        use_demo_name: bool = False) -> Patient:
+        """Generate a synthetic patient.
+
+        Args:
+            is_synthetic: Whether this is synthetic data
+            external_id: Optional external identifier
+            use_demo_name: If True, use DEMO-001 style identifier instead of personal names
+        """
+        if use_demo_name:
+            patient = Patient(
+                external_id=external_id or "DEMO-001",
+                first_name="",
+                last_name="",
+                gender=random.choice(list(Gender)),
+                is_synthetic=is_synthetic
+            )
+        else:
+            patient = Patient(
+                external_id=external_id or f"synthetic_{random.randint(1000, 9999)}",
+                first_name=random.choice(self.FIRST_NAMES),
+                last_name=random.choice(self.LAST_NAMES),
+                gender=random.choice(list(Gender)),
+                is_synthetic=is_synthetic
+            )
         
         # Random date of birth (20-70 years old)
         age = random.randint(20, 70)

@@ -47,10 +47,10 @@
             display: flex;
             min-height: 100vh;
         }
-        
+
         /* Sidebar Navigation */
         .sidebar {
-            width: 260px;
+            width: 240px;
             background-color: var(--primary-green);
             color: var(--white);
             display: flex;
@@ -60,69 +60,74 @@
             overflow-y: auto;
             z-index: 100;
         }
-        
+
         .sidebar-brand {
-            padding: 1.5rem;
+            padding: 1.25rem 1.5rem;
             border-bottom: 1px solid rgba(255,255,255,0.1);
         }
-        
+
         .sidebar-brand-text {
-            font-size: 1.25rem;
+            font-size: 1.125rem;
             font-weight: 600;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.25px;
         }
-        
+
         .sidebar-brand-sub {
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             color: var(--accent-mint);
             margin-top: 0.25rem;
+            opacity: 0.9;
         }
-        
+
         .sidebar-nav {
             flex: 1;
-            padding: 1rem 0;
+            padding: 0.75rem 0;
         }
-        
+
         .sidebar-nav-item {
             display: block;
-            padding: 0.875rem 1.5rem;
-            color: rgba(255,255,255,0.8);
+            padding: 0.75rem 1.5rem;
+            color: rgba(255,255,255,0.85);
             text-decoration: none;
-            transition: all 0.2s;
+            transition: all 0.15s ease;
             border-left: 3px solid transparent;
+            font-size: 0.875rem;
         }
-        
+
         .sidebar-nav-item:hover {
-            background-color: rgba(255,255,255,0.1);
+            background-color: rgba(255,255,255,0.08);
             color: var(--white);
         }
-        
+
         .sidebar-nav-item.active {
-            background-color: rgba(255,255,255,0.15);
+            background-color: rgba(255,255,255,0.12);
             color: var(--white);
             border-left-color: var(--accent-mint);
+            font-weight: 500;
         }
-        
+
         .sidebar-footer {
-            padding: 1rem 1.5rem;
+            padding: 0.875rem 1.5rem;
             border-top: 1px solid rgba(255,255,255,0.1);
-            font-size: 0.75rem;
-            color: rgba(255,255,255,0.6);
+            font-size: 0.7rem;
+            color: rgba(255,255,255,0.65);
+            line-height: 1.4;
         }
         
         /* Main Content Area */
         .main-content {
             flex: 1;
-            margin-left: 260px;
+            margin-left: 240px;
             display: flex;
             flex-direction: column;
+            background-color: var(--bg-warm);
         }
-        
+
         /* Top Navigation Bar */
         .top-nav {
             background-color: var(--white);
             border-bottom: 1px solid var(--gray-200);
-            padding: 1rem 2rem;
+            padding: 0.875rem 1.5rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -140,13 +145,14 @@
         .breadcrumb {
             font-size: 0.875rem;
             color: var(--gray-500);
+            font-weight: 500;
         }
-        
+
         .breadcrumb a {
             color: var(--gray-600);
             text-decoration: none;
         }
-        
+
         .breadcrumb a:hover {
             color: var(--primary-green);
         }
@@ -180,7 +186,7 @@
         /* Content Container */
         .content-container {
             flex: 1;
-            padding: 2rem;
+            padding: 1.5rem;
             max-width: 1400px;
             margin: 0 auto;
             width: 100%;
@@ -475,8 +481,8 @@
             <a href="/trends" class="sidebar-nav-item {% if request.path == '/trends' %}active{% endif %}">Health Trends</a>
             <a href="/risk" class="sidebar-nav-item {% if request.path == '/risk' %}active{% endif %}">Risk Insights</a>
             <a href="/scenarios" class="sidebar-nav-item {% if request.path == '/scenarios' %}active{% endif %}">Scenario Simulator</a>
-            <a href="/data" class="sidebar-nav-item {% if request.path == '/data' %}active{% endif %}">Data & Imports</a>
-            <a href="/about" class="sidebar-nav-item {% if request.path == '/about' %}active{% endif %}">About</a>
+            <a href="/data" class="sidebar-nav-item {% if request.path == '/data' %}active{% endif %}">Data Import & Export</a>
+            <a href="/about" class="sidebar-nav-item {% if request.path == '/about' %}active{% endif %}">Project Information</a>
         </nav>
         <div class="sidebar-footer">
             Research Prototype<br>
@@ -506,10 +512,10 @@
         <footer class="footer">
             <div class="footer-content">
                 <div>
-                    &copy; 2026 Swasthya Twin - Brain Catalyst Team
+                    &copy; 2026 Swasthya Twin
                 </div>
                 <div class="footer-links">
-                    <a href="/about">About</a>
+                    <a href="/about">Project Information</a>
                     <a href="https://github.com/Sreevalli20/digital" target="_blank" rel="noopener">GitHub</a>
                 </div>
             </div>
