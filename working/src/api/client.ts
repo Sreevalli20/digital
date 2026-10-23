@@ -124,7 +124,13 @@ class APIClient {
   async createScenario(patientId: string, scenarioData: {
     scenarioName?: string;
     description?: string;
-    adjustments?: any;
+    adjustments?: {
+      physicalActivityMinutesPerDay: number;
+      sodiumReductionMg: number;
+      sleepHours: number;
+      weightReductionKg: number;
+      dietaryGlycemicIndexShift: string;
+    };
   }): Promise<any> {
     return this.fetch(`/patients/${patientId}/scenarios`, {
       method: 'POST',
@@ -139,6 +145,28 @@ class APIClient {
       throw new Error(`API error: ${response.status} ${response.statusText}`);
     }
     return response.blob();
+  }
+
+  async importCSV(patientId: string, file: File): Promise<{
+    message: string;
+    created: number;
+    observations: Observation[];
+  }> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const url = `${this.baseUrl}/patients/${patientId}/import/csv`;
+    const response = await fetch(url, {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || `API error: ${response.status} ${response.statusText}`);
+    }
+
+    return response.json();
   }
 }
 

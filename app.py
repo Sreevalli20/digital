@@ -690,10 +690,6 @@ def react_create_scenario(external_id):
 
     data = request.get_json()
 
-    # Map React adjustments to Flask scenario modifications
-    # For now, we'll implement a simplified scenario based on the Flask ScenarioEngine
-    # React sends lifestyle adjustments; we need to translate these to metric modifications
-
     # Get baseline state and risk
     baseline_state = twin_engine.compute_state(patient.id)
     baseline_risk = prediction_engine.assess_risk(baseline_state)
@@ -705,27 +701,19 @@ def react_create_scenario(external_id):
         description=data.get('description', 'Simulated lifestyle intervention')
     )
 
-    # Apply modifications based on React adjustments
+    # Translate React lifestyle adjustments to Flask scenario modifications
     adjustments = data.get('adjustments', {})
+    modifications = APIAdapter.lifestyle_adjustments_to_scenario_modifications(
+        adjustments, baseline_state
+    )
 
-    # Simple translation: use baseline values and apply estimated deltas
-    # This is a simplified implementation - the Flask ScenarioEngine expects direct feature modifications
-    # We'll estimate the modified values based on the adjustments
-
-    # For now, return a placeholder that indicates this needs more sophisticated mapping
-    # The Flask ScenarioEngine expects modifications in terms of direct feature values
-    # while React sends lifestyle interventions (activity, sodium, sleep, etc.)
-
-    # As a first pass, we'll use the suggest_improvements approach
-    suggestions = scenario_engine.suggest_improvements(baseline_state, baseline_risk)
-
-    # Apply suggested improvements as modifications
-    for feature_name, suggestion in suggestions.items():
+    # Apply modifications to scenario
+    for feature_name, mod in modifications.items():
         scenario.add_modification(
             feature_name=feature_name,
-            original_value=suggestion['current'],
-            modified_value=suggestion['suggested'],
-            unit=suggestion['unit']
+            original_value=mod['current'],
+            modified_value=mod['suggested'],
+            unit=mod['unit']
         )
 
     # Run scenario
@@ -760,6 +748,56 @@ def react_export_patient_data(external_id):
         )
     else:
         return jsonify({'error': 'Invalid format. Use csv.'}), 400
+
+
+@app.route('/api/react/patients/<external_id>/import/csv', methods=['POST'])
+def react_import_csv(external_id):
+    """Import CSV data for a patient in React format."""
+    # Find patient by external_id
+    patients = patient_repo.get_all()
+    patient = next((p for p in patients if p.external_id == external_id), None)
+
+    if not patient:
+        return jsonify({'error': 'Patient not found'}), 404
+
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file provided'}), 400
+
+    file = request.files['file']
+
+    if file.filename == '':
+        return jsonify({'error': 'No file selected'}), 400
+
+    if not allowed_file(file.filename):
+        return jsonify({'error': 'Invalid file type. Only CSV files are allowed.'}), 400
+
+    try:
+        csv_content = file.read().decode('utf-8')
+        observations, errors = csv_service.parse_csv(csv_content, patient.id)
+
+        if errors:
+            return jsonify({'errors': errors}), 400
+
+        # Validate and ingest
+        valid_obs, validation_errors = csv_service.validate_and_ingest(observations)
+
+        if validation_errors:
+            return jsonify({'validation_errors': validation_errors}), 400
+
+        # Create in database
+        created = observation_repo.create_batch(valid_obs)
+
+        # Convert to React format
+        react_observations = [APIAdapter.observation_to_react_format(obs, external_id) for obs in created]
+
+        return jsonify({
+            'message': f'Successfully imported {len(created)} observations',
+            'created': len(created),
+            'observations': react_observations
+        }), 201
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
 # Error handlers

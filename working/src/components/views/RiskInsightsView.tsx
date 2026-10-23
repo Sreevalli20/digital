@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PatientProfile, Observation, RiskAssessment } from '../../types/health';
 import { evaluateRiskAssessments } from '../../data/mockData';
+import { apiClient } from '../../api/client';
 import {
   ShieldAlert,
   AlertCircle,
@@ -10,7 +11,8 @@ import {
   Info,
   Layers,
   Database,
-  ArrowRight
+  ArrowRight,
+  Loader2
 } from 'lucide-react';
 import { NavTabId } from '../layout/Sidebar';
 
@@ -25,11 +27,53 @@ export const RiskInsightsView: React.FC<RiskInsightsViewProps> = ({
   observations,
   onNavigateTab
 }) => {
-  const assessments = evaluateRiskAssessments(patient, observations);
-  const [selectedAssessmentId, setSelectedAssessmentId] = useState<string>(assessments[0].id);
+  const [assessments, setAssessments] = useState<RiskAssessment[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedAssessmentId, setSelectedAssessmentId] = useState<string>('');
+
+  // Load risk assessments from backend
+  useEffect(() => {
+    async function loadRiskAssessments() {
+      if (!patient.id) return;
+
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const apiAssessments = await apiClient.getRiskAssessment(patient.id);
+        setAssessments(apiAssessments);
+        if (apiAssessments.length > 0) {
+          setSelectedAssessmentId(apiAssessments[0].id);
+        }
+      } catch (err) {
+        console.error('Failed to load risk assessments:', err);
+        setError('Failed to load risk assessments from backend. Using offline calculation as fallback.');
+        // Fallback to mock calculation
+        const fallbackAssessments = evaluateRiskAssessments(patient, observations);
+        setAssessments(fallbackAssessments);
+        if (fallbackAssessments.length > 0) {
+          setSelectedAssessmentId(fallbackAssessments[0].id);
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    loadRiskAssessments();
+  }, [patient.id, patient, observations]);
 
   const activeAssessment =
     assessments.find((a) => a.id === selectedAssessmentId) || assessments[0];
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="w-6 h-6 text-teal-800 animate-spin" />
+        <span className="ml-2 text-xs text-slate-600">Loading risk assessments...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -47,6 +91,13 @@ export const RiskInsightsView: React.FC<RiskInsightsViewProps> = ({
           </div>
         </div>
       </div>
+
+      {error && (
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-800 flex items-start gap-2">
+          <Info className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+          <span>{error}</span>
+        </div>
+      )}
 
       {/* Screen Overview: Assessment Selector Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

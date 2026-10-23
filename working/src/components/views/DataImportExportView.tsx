@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Observation, PatientProfile } from '../../types/health';
 import { METRIC_DEFINITIONS } from '../../data/mockData';
 import { apiClient } from '../../api/client';
@@ -13,7 +13,8 @@ import {
   FileCheck2,
   Copy,
   Check,
-  Loader2
+  Loader2,
+  X
 } from 'lucide-react';
 
 interface DataImportExportViewProps {
@@ -35,14 +36,9 @@ export const DataImportExportView: React.FC<DataImportExportViewProps> = ({
   const [importErrors, setImportErrors] = useState<string[]>([]);
   const [importSuccessMsg, setImportSuccessMsg] = useState<string | null>(null);
   const [isExporting, setIsExporting] = useState(false);
-
-  // Sample CSV text that can be pasted or imported
-  const [customCsvInput, setCustomCsvInput] = useState<string>(
-    `observation_id,patient_id,recorded_at,metric_key,value,unit,category,context_notes,is_synthetic\n` +
-      `demo-import-1,${activePatientId},2026-10-21,systolic_bp,128,mmHg,cardiovascular,"Home automated test",1\n` +
-      `demo-import-2,${activePatientId},2026-10-21,diastolic_bp,82,mmHg,cardiovascular,"Home automated test",1\n` +
-      `demo-import-3,${activePatientId},2026-10-22,fasting_glucose,102,mg/dL,metabolic,"Fasted 12h morning check",1`
-  );
+  const [isImporting, setIsImporting] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const exportObservations =
     selectedExportScope === 'current'
@@ -72,40 +68,45 @@ export const DataImportExportView: React.FC<DataImportExportViewProps> = ({
     }
   };
 
-  const handleValidateCsv = () => {
-    setImportSuccessMsg(null);
-    // Client-side validation only - actual import would require backend CSV upload endpoint
-    // For now, we'll do basic CSV parsing validation
-    const lines = customCsvInput.split(/\r?\n/).filter((l) => l.trim().length > 0);
-    if (lines.length < 2) {
-      setImportErrors(['CSV file is empty or missing data rows.']);
-      setImportedPreview(null);
-      return;
-    }
-
-    const headerLine = lines[0].toLowerCase();
-    const requiredCols = ['patient_id', 'recorded_at', 'metric_key', 'value'];
-    const errors: string[] = [];
-    for (const col of requiredCols) {
-      if (!headerLine.includes(col)) {
-        errors.push(`Missing mandatory column header: ${col}`);
-      }
-    }
-
-    if (errors.length > 0) {
-      setImportErrors(errors);
-      setImportedPreview(null);
-    } else {
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
       setImportErrors([]);
-      setImportSuccessMsg('CSV schema validated. Note: Actual import requires backend file upload endpoint (not yet implemented).');
+      setImportSuccessMsg(null);
+      setImportedPreview(null);
     }
   };
 
-  const handleCommitImport = () => {
-    // This would require a backend file upload endpoint
-    // For now, show a message that this is not yet fully implemented
-    setImportSuccessMsg('CSV import requires backend file upload endpoint. Please use the Flask dashboard for CSV uploads.');
-    setImportedPreview(null);
+  const handleCommitImport = async () => {
+    if (!selectedFile) {
+      setImportErrors(['Please select a CSV file to import.']);
+      return;
+    }
+
+    setIsImporting(true);
+    setImportErrors([]);
+    setImportSuccessMsg(null);
+
+    try {
+      const result = await apiClient.importCSV(activePatientId, selectedFile);
+      setImportSuccessMsg(result.message);
+      setImportedPreview(result.observations);
+      onImportObservations(result.observations);
+      setSelectedFile(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    } catch (err: any) {
+      console.error('Failed to import CSV:', err);
+      if (err.message) {
+        setImportErrors([err.message]);
+      } else {
+        setImportErrors(['Failed to import CSV. Please check the file format and try again.']);
+      }
+    } finally {
+      setIsImporting(false);
+    }
   };
 
   const handleCopyFhirJson = () => {
@@ -254,30 +255,60 @@ export const DataImportExportView: React.FC<DataImportExportViewProps> = ({
               <div className="flex items-center gap-2">
                 <Upload className="w-4 h-4 text-teal-800" />
                 <h3 className="text-sm font-semibold text-slate-900">
-                  CSV Batch Importer & Validator
+                  CSV Batch Importer
                 </h3>
               </div>
-              <span className="text-xs text-slate-400">Schema Check</span>
+              <span className="text-xs text-slate-400">Flask Backend</span>
             </div>
 
             <div className="space-y-3 text-xs">
               <p className="text-slate-500">
-                Paste raw CSV rows below to simulate ingestion from external devices, EHR exports, or your Flask backend.
+                Upload a CSV file to import observations from external devices, EHR exports, or your Flask backend.
               </p>
 
-              <textarea
-                rows={5}
-                value={customCsvInput}
-                onChange={(e) => setCustomCsvInput(e.target.value)}
-                className="w-full p-2.5 text-[11px] font-mono bg-slate-50 border border-slate-200 rounded text-slate-800 focus:outline-none focus:ring-1 focus:ring-teal-700"
-                placeholder="Paste CSV rows..."
-              />
+              <div className="border-2 border-dashed border-slate-300 rounded-lg p-4 text-center hover:border-teal-400 transition-colors">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".csv"
+                  onChange={handleFileSelect}
+                  className="hidden"
+                  id="csv-file-input"
+                />
+                <label
+                  htmlFor="csv-file-input"
+                  className="cursor-pointer flex flex-col items-center gap-2"
+                >
+                  <FileSpreadsheet className="w-8 h-8 text-slate-400" />
+                  <span className="text-slate-600">
+                    {selectedFile ? selectedFile.name : 'Click to select a CSV file'}
+                  </span>
+                  <span className="text-slate-400 text-[10px]">
+                    Max file size: 16MB
+                  </span>
+                </label>
+                {selectedFile && (
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setSelectedFile(null);
+                      if (fileInputRef.current) {
+                        fileInputRef.current.value = '';
+                      }
+                    }}
+                    className="mt-2 text-rose-600 hover:text-rose-700 text-[10px] flex items-center gap-1"
+                  >
+                    <X className="w-3 h-3" />
+                    Remove file
+                  </button>
+                )}
+              </div>
 
               {importErrors.length > 0 && (
                 <div className="p-3 bg-rose-50 border border-rose-200 rounded text-xs text-rose-800 space-y-1">
                   <div className="font-semibold flex items-center gap-1.5">
                     <AlertTriangle className="w-4 h-4 text-rose-600" />
-                    <span>Validation Errors Detected:</span>
+                    <span>Import Errors:</span>
                   </div>
                   <ul className="list-disc pl-5 space-y-0.5 text-[11px]">
                     {importErrors.map((err, i) => (
@@ -297,15 +328,20 @@ export const DataImportExportView: React.FC<DataImportExportViewProps> = ({
               {importedPreview && (
                 <div className="p-3 bg-teal-50 border border-teal-200 rounded text-xs text-teal-900 space-y-2">
                   <div className="font-semibold">
-                    Validated {importedPreview.length} observations ready for ingestion:
+                    Successfully imported {importedPreview.length} observations:
                   </div>
                   <div className="max-h-28 overflow-y-auto font-mono text-[11px] divide-y divide-teal-200/60">
-                    {importedPreview.map((p, i) => (
+                    {importedPreview.slice(0, 10).map((p, i) => (
                       <div key={i} className="py-1 flex justify-between">
                         <span>{p.recordedAt} · {p.metricKey}</span>
                         <span className="font-bold">{p.value} {p.unit}</span>
                       </div>
                     ))}
+                    {importedPreview.length > 10 && (
+                      <div className="py-1 text-slate-500 text-center">
+                        ... and {importedPreview.length - 10} more
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -314,19 +350,22 @@ export const DataImportExportView: React.FC<DataImportExportViewProps> = ({
 
           <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-3">
             <button
-              onClick={handleValidateCsv}
-              className="px-3 py-2 text-xs font-medium text-slate-700 hover:text-slate-900 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded transition-colors"
+              onClick={handleCommitImport}
+              disabled={!selectedFile || isImporting}
+              className="px-4 py-2 text-xs font-semibold text-white bg-teal-800 hover:bg-teal-900 rounded transition-colors shadow-2xs disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
-              Validate Schema
+              {isImporting ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <span>Importing...</span>
+                </>
+              ) : (
+                <>
+                  <Upload className="w-3.5 h-3.5" />
+                  <span>Import CSV</span>
+                </>
+              )}
             </button>
-            {importedPreview && (
-              <button
-                onClick={handleCommitImport}
-                className="px-4 py-2 text-xs font-semibold text-white bg-teal-800 hover:bg-teal-900 rounded transition-colors shadow-2xs"
-              >
-                Commit {importedPreview.length} Records to Twin
-              </button>
-            )}
           </div>
         </div>
       </div>

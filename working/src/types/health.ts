@@ -79,7 +79,7 @@ export interface RiskAssessment {
   title: string;
   category: 'Cardiovascular' | 'Metabolic' | 'Multisystem';
   scorePercent: number; // e.g., 14.8%
-  classification: 'Low Risk' | 'Borderline' | 'Moderate' | 'Elevated' | 'High Risk';
+  classification: 'Low Risk' | 'Borderline' | 'Elevated' | 'High Risk';
   methodologyDescription: string;
   contributingFactors: ContributingFactor[];
   missingInputs: string[];

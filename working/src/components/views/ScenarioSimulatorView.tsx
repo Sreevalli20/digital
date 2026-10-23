@@ -2,13 +2,15 @@ import React, { useState, useMemo } from 'react';
 import {
   PatientProfile,
   Observation,
-  ScenarioAdjustments
+  ScenarioAdjustments,
+  ScenarioSimulationResult
 } from '../../types/health';
 import {
-  runScenarioSimulation,
   calculateMetricBaseline,
-  METRIC_DEFINITIONS
+  METRIC_DEFINITIONS,
+  runScenarioSimulation
 } from '../../data/mockData';
+import { apiClient } from '../../api/client';
 import {
   Sliders,
   RotateCcw,
@@ -19,7 +21,8 @@ import {
   ArrowRight,
   CheckCircle2,
   Sparkles,
-  HeartPulse
+  HeartPulse,
+  Loader2
 } from 'lucide-react';
 
 interface ScenarioSimulatorViewProps {
@@ -44,10 +47,38 @@ export const ScenarioSimulatorView: React.FC<ScenarioSimulatorViewProps> = ({
   const [selectedTrajectoryMetric, setSelectedTrajectoryMetric] = useState<
     'systolic_bp' | 'fasting_glucose' | 'resting_heart_rate'
   >('systolic_bp');
+  const [simulation, setSimulation] = useState<ScenarioSimulationResult | null>(null);
+  const [isSimulating, setIsSimulating] = useState(false);
+  const [simulationError, setSimulationError] = useState<string | null>(null);
 
-  const simulation = useMemo(() => {
-    return runScenarioSimulation(patient, observations, adjustments);
-  }, [patient, observations, adjustments]);
+  // Run simulation when adjustments change (debounced)
+  React.useEffect(() => {
+    const timer = setTimeout(async () => {
+      if (!patient.id) return;
+
+      setIsSimulating(true);
+      setSimulationError(null);
+
+      try {
+        const result = await apiClient.createScenario(patient.id, {
+          scenarioName: 'Lifestyle Intervention',
+          description: 'Simulated lifestyle intervention based on user adjustments',
+          adjustments: adjustments
+        });
+        setSimulation(result);
+      } catch (err) {
+        console.error('Failed to run scenario simulation:', err);
+        setSimulationError('Backend simulation failed. Using offline calculation as fallback.');
+        // Fallback to mock calculation if backend fails
+        const fallbackResult = runScenarioSimulation(patient, observations, adjustments);
+        setSimulation(fallbackResult);
+      } finally {
+        setIsSimulating(false);
+      }
+    }, 500); // 500ms debounce
+
+    return () => clearTimeout(timer);
+  }, [patient.id, adjustments, patient, observations]);
 
   const handleReset = () => {
     setAdjustments({
@@ -88,10 +119,23 @@ export const ScenarioSimulatorView: React.FC<ScenarioSimulatorViewProps> = ({
   };
 
   // Trajectory visualization helper
-  const targetMetricProj = simulation.projectedMetrics.find(
+  const targetMetricProj = simulation?.projectedMetrics.find(
     (m) => m.metricKey === selectedTrajectoryMetric
   );
   const def = METRIC_DEFINITIONS[selectedTrajectoryMetric];
+
+  // Use fallback simulation if backend call failed
+  const fallbackSimulation = useMemo(() => {
+    if (!simulation) {
+      return runScenarioSimulation(patient, observations, adjustments);
+    }
+    return simulation;
+  }, [simulation, patient, observations, adjustments]);
+
+  const displaySimulation = simulation || fallbackSimulation;
+  const displayTargetMetricProj = displaySimulation.projectedMetrics.find(
+    (m) => m.metricKey === selectedTrajectoryMetric
+  );
 
   return (
     <div className="space-y-6">
@@ -103,10 +147,17 @@ export const ScenarioSimulatorView: React.FC<ScenarioSimulatorViewProps> = ({
             Hypothetical Twin Projection — Research Sandbox
           </strong>
           <span>
-            Simulated outcomes are mathematical directional estimates based on clinical trial meta-analyses (DASH, Diabetes Prevention Program, and Look AHEAD). These are hypothetical projections for lifestyle planning, <strong>not guaranteed clinical outcomes or diagnostic prescriptions</strong>. <em>Note: Client-side calculation using observed patient data.</em>
+            Simulated outcomes are mathematical directional estimates based on clinical trial meta-analyses (DASH, Diabetes Prevention Program, and Look AHEAD). These are hypothetical projections for lifestyle planning, <strong>not guaranteed clinical outcomes or diagnostic prescriptions</strong>. <em>{simulationError ? 'Offline calculation' : 'Server-side Flask scenario engine'} using observed patient data.</em>
           </span>
         </div>
       </div>
+
+      {simulationError && (
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-800 flex items-start gap-2">
+          <Info className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+          <span>{simulationError}</span>
+        </div>
+      )}
 
       {/* Main Grid: Adjustment Controls (Left) & Projected Results (Right) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -329,69 +380,76 @@ export const ScenarioSimulatorView: React.FC<ScenarioSimulatorViewProps> = ({
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {simulation.projectedMetrics.map((proj) => {
-                const metricDef = METRIC_DEFINITIONS[proj.metricKey];
-                return (
-                  <div
-                    key={proj.metricKey}
-                    onClick={() =>
-                      setSelectedTrajectoryMetric(
-                        proj.metricKey as 'systolic_bp' | 'fasting_glucose' | 'resting_heart_rate'
-                      )
-                    }
-                    className={`p-3.5 rounded border transition-all cursor-pointer ${
-                      selectedTrajectoryMetric === proj.metricKey
-                        ? 'bg-teal-50/50 border-teal-700 ring-1 ring-teal-700'
-                        : 'bg-slate-50 border-slate-200/80 hover:bg-slate-100/60'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
-                      <span className="font-medium text-slate-800">
-                        {metricDef.shortLabel}
-                      </span>
-                      <span className="text-[10px] text-slate-400 font-mono">
-                        Target {metricDef.optimalTarget}
-                      </span>
-                    </div>
-
-                    <div className="flex items-baseline justify-between mt-1">
-                      <div className="text-xs text-slate-500 font-mono">
-                        Baseline:{' '}
-                        <span className="font-semibold text-slate-700">
-                          {proj.baselineValue} {proj.unit}
+              {isSimulating ? (
+                <div className="col-span-2 flex items-center justify-center py-8">
+                  <Loader2 className="w-6 h-6 text-teal-800 animate-spin" />
+                  <span className="ml-2 text-xs text-slate-600">Running simulation...</span>
+                </div>
+              ) : (
+                displaySimulation.projectedMetrics.map((proj) => {
+                  const metricDef = METRIC_DEFINITIONS[proj.metricKey];
+                  return (
+                    <div
+                      key={proj.metricKey}
+                      onClick={() =>
+                        setSelectedTrajectoryMetric(
+                          proj.metricKey as 'systolic_bp' | 'fasting_glucose' | 'resting_heart_rate'
+                        )
+                      }
+                      className={`p-3.5 rounded border transition-all cursor-pointer ${
+                        selectedTrajectoryMetric === proj.metricKey
+                          ? 'bg-teal-50/50 border-teal-700 ring-1 ring-teal-700'
+                          : 'bg-slate-50 border-slate-200/80 hover:bg-slate-100/60'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
+                        <span className="font-medium text-slate-800">
+                          {metricDef.shortLabel}
+                        </span>
+                        <span className="text-[10px] text-slate-400 font-mono">
+                          Target {metricDef.optimalTarget}
                         </span>
                       </div>
-                      <div className="text-right">
-                        <span className="text-lg font-bold font-mono text-teal-900 tabular-nums">
-                          {proj.simulatedValue}{' '}
-                          <span className="text-xs font-normal text-slate-500">
-                            {proj.unit}
+
+                      <div className="flex items-baseline justify-between mt-1">
+                        <div className="text-xs text-slate-500 font-mono">
+                          Baseline:{' '}
+                          <span className="font-semibold text-slate-700">
+                            {proj.baselineValue} {proj.unit}
                           </span>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-lg font-bold font-mono text-teal-900 tabular-nums">
+                            {proj.simulatedValue}{' '}
+                            <span className="text-xs font-normal text-slate-500">
+                              {proj.unit}
+                            </span>
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Delta highlight */}
+                      <div className="mt-2 pt-1.5 border-t border-slate-200/60 flex items-center justify-between text-[11px]">
+                        <span className="text-slate-500">Projected Shift:</span>
+                        <span
+                          className={`font-mono font-semibold tabular-nums ${
+                            proj.absoluteDelta <= 0
+                              ? 'text-emerald-700'
+                              : 'text-amber-700'
+                          }`}
+                        >
+                          {proj.absoluteDelta > 0 ? '+' : ''}
+                          {proj.absoluteDelta} {proj.unit} ({proj.percentDelta}%)
                         </span>
                       </div>
-                    </div>
 
-                    {/* Delta highlight */}
-                    <div className="mt-2 pt-1.5 border-t border-slate-200/60 flex items-center justify-between text-[11px]">
-                      <span className="text-slate-500">Projected Shift:</span>
-                      <span
-                        className={`font-mono font-semibold tabular-nums ${
-                          proj.absoluteDelta <= 0
-                            ? 'text-emerald-700'
-                            : 'text-amber-700'
-                        }`}
-                      >
-                        {proj.absoluteDelta > 0 ? '+' : ''}
-                        {proj.absoluteDelta} {proj.unit} ({proj.percentDelta}%)
-                      </span>
+                      <p className="text-[10px] text-slate-500 mt-1 line-clamp-1">
+                        {proj.clinicalSignificance}
+                      </p>
                     </div>
-
-                    <p className="text-[10px] text-slate-500 mt-1 line-clamp-1">
-                      {proj.clinicalSignificance}
-                    </p>
-                  </div>
-                );
-              })}
+                  );
+                })
+              )}
             </div>
 
             {/* Projected Risk Score Reductions */}
@@ -400,7 +458,7 @@ export const ScenarioSimulatorView: React.FC<ScenarioSimulatorViewProps> = ({
                 Projected Screening Risk Shifts
               </span>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {simulation.projectedRiskChanges.map((rc, idx) => (
+                {displaySimulation.projectedRiskChanges.map((rc, idx) => (
                   <div
                     key={idx}
                     className="p-3 bg-emerald-50/60 border border-emerald-200/80 rounded text-xs"
@@ -454,7 +512,7 @@ export const ScenarioSimulatorView: React.FC<ScenarioSimulatorViewProps> = ({
                   strokeDasharray="2 2"
                 />
                 <text x="35" y="123" textAnchor="end" className="text-[10px] fill-slate-400 font-mono">
-                  {targetMetricProj?.simulatedValue}
+                  {displayTargetMetricProj?.simulatedValue}
                 </text>
 
                 {/* Baseline reference */}
@@ -468,7 +526,7 @@ export const ScenarioSimulatorView: React.FC<ScenarioSimulatorViewProps> = ({
                   strokeDasharray="3 3"
                 />
                 <text x="35" y="43" textAnchor="end" className="text-[10px] fill-slate-500 font-mono">
-                  {targetMetricProj?.baselineValue}
+                  {displayTargetMetricProj?.baselineValue}
                 </text>
 
                 {/* Trajectory curve from Week 0 to Week 12 */}
@@ -502,11 +560,11 @@ export const ScenarioSimulatorView: React.FC<ScenarioSimulatorViewProps> = ({
             </div>
 
             <div className="flex items-center justify-between text-[11px] text-slate-500 pt-2 border-t border-slate-100">
-              <span>Week 0: {targetMetricProj?.baselineValue} {def.unit}</span>
+              <span>Week 0: {displayTargetMetricProj?.baselineValue} {def.unit}</span>
               <span className="text-teal-800 font-medium">
                 Stabilizes around Week 6–8 per physiological adaptation latency
               </span>
-              <span>Week 12: {targetMetricProj?.simulatedValue} {def.unit}</span>
+              <span>Week 12: {displayTargetMetricProj?.simulatedValue} {def.unit}</span>
             </div>
           </div>
 
@@ -518,7 +576,7 @@ export const ScenarioSimulatorView: React.FC<ScenarioSimulatorViewProps> = ({
             </h4>
 
             <div className="space-y-2 text-xs">
-              {simulation.evidenceCitations.map((cite, idx) => (
+              {displaySimulation.evidenceCitations.map((cite, idx) => (
                 <div
                   key={idx}
                   className="p-2.5 bg-slate-50 rounded border border-slate-100"
