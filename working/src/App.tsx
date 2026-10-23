@@ -13,7 +13,6 @@ import { ScenarioSimulatorView } from './components/views/ScenarioSimulatorView'
 import { ObservationsLogView } from './components/views/ObservationsLogView';
 import { DataImportExportView } from './components/views/DataImportExportView';
 import { EvidenceReportsView } from './components/views/EvidenceReportsView';
-import { ProjectInfoFlaskGuide } from './components/views/ProjectInfoFlaskGuide';
 import { RecordObservationModal } from './components/modals/RecordObservationModal';
 import { apiClient } from './api/client';
 
@@ -34,10 +33,7 @@ export default function App() {
         setIsLoading(true);
         setError(null);
 
-        // Initialize demo if needed
-        const demoResponse = await apiClient.initializeDemo();
-
-        // Load patients
+        // Load patients - do NOT auto-initialize demo
         const apiPatients = await apiClient.getPatients();
 
         // Convert API patients to internal format
@@ -141,6 +137,37 @@ export default function App() {
           >
             Refresh Page
           </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Show onboarding screen if no patients exist
+  if (patients.length === 0) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#f7f9f8]">
+        <div className="text-center max-w-lg p-8 bg-white rounded-lg border border-slate-200 shadow-lg">
+          <h1 className="text-2xl font-bold text-slate-900 mb-2">Your workspace is ready</h1>
+          <p className="text-slate-600 mb-6">
+            Add a patient profile or import health observations to begin tracking health metrics.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <button
+              onClick={() => setCurrentTab('profiles')}
+              className="px-6 py-3 bg-teal-800 text-white rounded hover:bg-teal-900 font-medium"
+            >
+              Create Patient Profile
+            </button>
+            <button
+              onClick={() => setCurrentTab('data')}
+              className="px-6 py-3 bg-white border border-slate-300 text-slate-700 rounded hover:bg-slate-50 font-medium"
+            >
+              Import Health Data
+            </button>
+          </div>
+          <p className="text-xs text-slate-400 mt-6">
+            To explore the interface with sample data, you can initialize a demo workspace from the Patient Profiles screen.
+          </p>
         </div>
       </div>
     );
@@ -257,8 +284,6 @@ export default function App() {
               observations={observations}
             />
           )}
-
-          {currentTab === 'project' && <ProjectInfoFlaskGuide />}
         </main>
       </div>
 

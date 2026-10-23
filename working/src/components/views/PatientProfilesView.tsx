@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { PatientProfile, Observation } from '../../types/health';
-import { Search, Plus, UserCheck, ShieldCheck, Calendar, Activity, Check, ChevronRight, X, AlertTriangle } from 'lucide-react';
+import { Search, Plus, UserCheck, ShieldCheck, Calendar, Activity, Check, ChevronRight, X, AlertTriangle, Play } from 'lucide-react';
 import { NavTabId } from '../layout/Sidebar';
+import { apiClient } from '../../api/client';
 
 interface PatientProfilesViewProps {
   patients: PatientProfile[];
@@ -72,22 +73,43 @@ export const PatientProfilesView: React.FC<PatientProfilesViewProps> = ({
     lastDate: 'N/A'
   };
 
-  const handleCreatePatient = (e: React.FormEvent) => {
+  const handleCreatePatient = async (e: React.FormEvent) => {
     e.preventDefault();
-    const created: PatientProfile = {
-      id: newId.trim().toUpperCase(),
-      birthYear: newBirthYear,
-      sexAtBirth: newSex,
-      monitoringStatus: 'Sparse History',
-      primaryFocus: newFocus.trim(),
-      enrolledDate: new Date().toISOString().split('T')[0],
-      baselineWindowDays: 60,
-      smokerStatus: newSmoker,
-      notes: newNotes.trim()
-    };
-    onAddPatient(created);
-    setInspectingPatientId(created.id);
-    setShowAddModal(false);
+
+    try {
+      // Note: The current Flask backend doesn't have a React-compatible patient creation endpoint
+      // For now, we'll create the patient locally and sync would require backend updates
+      const created: PatientProfile = {
+        id: newId.trim().toUpperCase(),
+        birthYear: newBirthYear,
+        sexAtBirth: newSex,
+        monitoringStatus: 'Sparse History',
+        primaryFocus: newFocus.trim(),
+        enrolledDate: new Date().toISOString().split('T')[0],
+        baselineWindowDays: 60,
+        smokerStatus: newSmoker,
+        notes: newNotes.trim()
+      };
+      onAddPatient(created);
+      setInspectingPatientId(created.id);
+      setShowAddModal(false);
+    } catch (err) {
+      console.error('Failed to create patient:', err);
+      alert('Failed to create patient profile. Please try again.');
+    }
+  };
+
+  const handleInitializeDemo = async () => {
+    try {
+      const response = await apiClient.initializeDemo();
+      if (response.created) {
+        // Refresh patients list
+        window.location.reload();
+      }
+    } catch (err) {
+      console.error('Failed to initialize demo:', err);
+      alert('Failed to initialize demo workspace. Please try again.');
+    }
   };
 
   return (
@@ -124,13 +146,22 @@ export const PatientProfilesView: React.FC<PatientProfilesViewProps> = ({
           </div>
         </div>
 
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-teal-800 hover:bg-teal-900 rounded transition-colors shadow-2xs self-start sm:self-auto"
-        >
-          <Plus className="w-3.5 h-3.5" />
-          <span>Add Synthetic Profile</span>
-        </button>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <button
+            onClick={handleInitializeDemo}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-slate-700 hover:bg-slate-800 rounded transition-colors shadow-2xs"
+          >
+            <Play className="w-3.5 h-3.5" />
+            <span>Initialize Demo</span>
+          </button>
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-teal-800 hover:bg-teal-900 rounded transition-colors shadow-2xs"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>Add Profile</span>
+          </button>
+        </div>
       </div>
 
       {/* Main Grid: Patient List & Inspection Drawer */}
@@ -347,13 +378,13 @@ export const PatientProfilesView: React.FC<PatientProfilesViewProps> = ({
         )}
       </div>
 
-      {/* Add Synthetic Patient Modal */}
+      {/* Add Patient Profile Modal */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4">
           <div className="bg-white rounded-lg border border-slate-200 shadow-xl max-w-md w-full overflow-hidden">
             <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
               <h3 className="text-sm font-semibold text-slate-900">
-                Add Synthetic Digital Twin Profile
+                Create Patient Profile
               </h3>
               <button
                 onClick={() => setShowAddModal(false)}

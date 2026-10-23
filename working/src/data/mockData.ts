@@ -336,7 +336,7 @@ export function calculateMetricBaseline(
       latestDate: 'N/A',
       deltaFromBaseline: 0,
       trend: 'insufficient_data',
-      statusLabel: 'Normal'
+      statusLabel: 'No Data'
     };
   }
 
@@ -424,22 +424,42 @@ export function evaluateRiskAssessments(
 
   // 1. Cardiovascular 10-Yr Screening Proxy (Rule-based surrogate)
   const cvdMissing: string[] = [];
-  if (totalChol.observationCount === 0) cvdMissing.push('Total Cholesterol (using baseline population proxy 190 mg/dL)');
-  if (hdl.observationCount === 0) cvdMissing.push('HDL Cholesterol (using baseline population proxy 45 mg/dL)');
+  if (totalChol.observationCount === 0) cvdMissing.push('Total Cholesterol');
+  if (hdl.observationCount === 0) cvdMissing.push('HDL Cholesterol');
   if (sbp.observationCount === 0) cvdMissing.push('Systolic BP');
+
+  // Only calculate if we have minimum required data
+  if (sbp.observationCount === 0) {
+    return [
+      {
+        id: 'ra-cvd',
+        patientId: patient.id,
+        assessmentType: 'cardiovascular_10yr',
+        title: 'Atherosclerotic CVD 10-Year Screening Proxy',
+        category: 'Cardiovascular',
+        scorePercent: 0,
+        classification: 'Insufficient Data',
+        methodologyDescription: 'Rules-based screening proxy adapted from ACC/AHA pooled cohort parameters.',
+        contributingFactors: [],
+        missingInputs: cvdMissing,
+        dataCompletenessPercent: 0,
+        clinicalDisclaimer: 'Insufficient data for risk assessment. Record blood pressure measurements to enable screening.'
+      }
+    ];
+  }
 
   let cvdBaseScore = 3.5;
   if (age > 50) cvdBaseScore += (age - 50) * 0.45;
   if (patient.sexAtBirth === 'Male') cvdBaseScore += 2.0;
 
-  const effectiveSbp = sbp.observationCount > 0 ? sbp.latestValue : 125;
+  const effectiveSbp = sbp.latestValue;
   if (effectiveSbp >= 140) cvdBaseScore += 4.5;
   else if (effectiveSbp >= 130) cvdBaseScore += 2.8;
   else if (effectiveSbp >= 120) cvdBaseScore += 1.2;
 
-  const effectiveChol = totalChol.observationCount > 0 ? totalChol.latestValue : 190;
-  if (effectiveChol > 220) cvdBaseScore += 3.2;
-  else if (effectiveChol > 200) cvdBaseScore += 1.8;
+  const effectiveChol = totalChol.observationCount > 0 ? totalChol.latestValue : null;
+  if (effectiveChol && effectiveChol > 220) cvdBaseScore += 3.2;
+  else if (effectiveChol && effectiveChol > 200) cvdBaseScore += 1.8;
 
   if (patient.smokerStatus === 'Current Smoker') cvdBaseScore += 5.0;
   else if (patient.smokerStatus === 'Former Smoker') cvdBaseScore += 1.2;
@@ -452,17 +472,17 @@ export function evaluateRiskAssessments(
     {
       factor: 'Vascular Hemodynamics (Systolic BP)',
       contributionPercent: 35,
-      observedValue: sbp.observationCount > 0 ? `${sbp.latestValue} mmHg` : 'Unrecorded',
-      baselineComparison: sbp.observationCount > 0 ? `${sbp.deltaFromBaseline > 0 ? '+' : ''}${sbp.deltaFromBaseline} mmHg from baseline` : 'No baseline',
+      observedValue: `${sbp.latestValue} mmHg`,
+      baselineComparison: `${sbp.deltaFromBaseline > 0 ? '+' : ''}${sbp.deltaFromBaseline} mmHg from baseline`,
       impactLevel: (effectiveSbp >= 130 ? 'high' : effectiveSbp >= 120 ? 'moderate' : 'low') as 'low' | 'moderate' | 'high'
     },
-    {
-      factor: 'Lipid Burden (Total Cholesterol Proxy)',
+    ...(effectiveChol ? [{
+      factor: 'Lipid Burden (Total Cholesterol)',
       contributionPercent: 25,
-      observedValue: totalChol.observationCount > 0 ? `${totalChol.latestValue} mg/dL` : 'Imputed 190 mg/dL',
-      baselineComparison: totalChol.observationCount > 0 ? `${totalChol.deltaFromBaseline} mg/dL` : 'Default estimate',
+      observedValue: `${totalChol.latestValue} mg/dL`,
+      baselineComparison: `${totalChol.deltaFromBaseline} mg/dL`,
       impactLevel: (effectiveChol >= 200 ? 'moderate' : 'low') as 'low' | 'moderate' | 'high'
-    },
+    }] : []),
     {
       factor: 'Demographic Non-Modifiable (Age & Sex)',
       contributionPercent: 25,
@@ -481,21 +501,42 @@ export function evaluateRiskAssessments(
 
   // 2. Type 2 Diabetes 5-Yr Progression Index (ADA-aligned screening formula)
   const t2dMissing: string[] = [];
-  if (hba1c.observationCount === 0) t2dMissing.push('HbA1c test (using fasting glucose surrogate)');
+  if (hba1c.observationCount === 0) t2dMissing.push('HbA1c test');
   if (bmi.observationCount === 0) t2dMissing.push('Body Mass Index');
+  if (glucose.observationCount === 0) t2dMissing.push('Fasting Glucose');
+
+  // Only calculate if we have minimum required data
+  if (glucose.observationCount === 0) {
+    return [
+      {
+        id: 'ra-t2d',
+        patientId: patient.id,
+        assessmentType: 'diabetes_progression',
+        title: 'Type 2 Diabetes 5-Year Progression Screening',
+        category: 'Metabolic',
+        scorePercent: 0,
+        classification: 'Insufficient Data',
+        methodologyDescription: 'Weighted screening model based on ADA criteria.',
+        contributingFactors: [],
+        missingInputs: t2dMissing,
+        dataCompletenessPercent: 0,
+        clinicalDisclaimer: 'Insufficient data for risk assessment. Record glucose measurements to enable screening.'
+      }
+    ];
+  }
 
   let t2dScore = 2.0;
-  const effectiveGlucose = glucose.observationCount > 0 ? glucose.latestValue : 95;
+  const effectiveGlucose = glucose.latestValue;
   if (effectiveGlucose >= 126) t2dScore += 9.0;
   else if (effectiveGlucose >= 100) t2dScore += 5.5;
 
-  const effectiveHba1c = hba1c.observationCount > 0 ? hba1c.latestValue : 5.4;
-  if (effectiveHba1c >= 6.5) t2dScore += 10.0;
-  else if (effectiveHba1c >= 5.7) t2dScore += 6.0;
+  const effectiveHba1c = hba1c.observationCount > 0 ? hba1c.latestValue : null;
+  if (effectiveHba1c && effectiveHba1c >= 6.5) t2dScore += 10.0;
+  else if (effectiveHba1c && effectiveHba1c >= 5.7) t2dScore += 6.0;
 
-  const effectiveBmi = bmi.observationCount > 0 ? bmi.latestValue : 24.5;
-  if (effectiveBmi >= 30) t2dScore += 5.0;
-  else if (effectiveBmi >= 25) t2dScore += 2.5;
+  const effectiveBmi = bmi.observationCount > 0 ? bmi.latestValue : null;
+  if (effectiveBmi && effectiveBmi >= 30) t2dScore += 5.0;
+  else if (effectiveBmi && effectiveBmi >= 25) t2dScore += 2.5;
 
   const t2dPercent = Math.min(50, Math.max(1.0, Number(t2dScore.toFixed(1))));
   const t2dClassification =
@@ -505,33 +546,59 @@ export function evaluateRiskAssessments(
     {
       factor: 'Glycemic Regulation (Fasting Blood Sugar)',
       contributionPercent: 40,
-      observedValue: glucose.observationCount > 0 ? `${glucose.latestValue} mg/dL` : 'Unrecorded',
-      baselineComparison: glucose.observationCount > 0 ? `${glucose.deltaFromBaseline > 0 ? '+' : ''}${glucose.deltaFromBaseline} mg/dL from baseline` : 'No baseline',
+      observedValue: `${glucose.latestValue} mg/dL`,
+      baselineComparison: `${glucose.deltaFromBaseline > 0 ? '+' : ''}${glucose.deltaFromBaseline} mg/dL from baseline`,
       impactLevel: (effectiveGlucose >= 100 ? 'high' : 'low') as 'low' | 'moderate' | 'high'
     },
-    {
+    ...(effectiveHba1c ? [{
       factor: 'Glycated Hemoglobin (90-day Glycemia)',
       contributionPercent: 35,
-      observedValue: hba1c.observationCount > 0 ? `${hba1c.latestValue} %` : 'Unrecorded',
-      baselineComparison: hba1c.observationCount > 0 ? `${hba1c.deltaFromBaseline} %` : 'No test on file',
+      observedValue: `${hba1c.latestValue} %`,
+      baselineComparison: `${hba1c.deltaFromBaseline} %`,
       impactLevel: (effectiveHba1c >= 5.7 ? 'moderate' : 'low') as 'low' | 'moderate' | 'high'
-    },
-    {
+    }] : []),
+    ...(effectiveBmi ? [{
       factor: 'Adiposity Index (BMI)',
       contributionPercent: 25,
-      observedValue: bmi.observationCount > 0 ? `${bmi.latestValue} kg/m²` : 'Estimated 24.5',
-      baselineComparison: bmi.observationCount > 0 ? `${bmi.deltaFromBaseline} kg/m²` : 'No record',
+      observedValue: `${bmi.latestValue} kg/m²`,
+      baselineComparison: `${bmi.deltaFromBaseline} kg/m²`,
       impactLevel: (effectiveBmi >= 27 ? 'moderate' : 'low') as 'low' | 'moderate' | 'high'
-    }
+    }] : [])
   ];
 
   // 3. Metabolic Syndrome Burden (ATP III Criteria screening)
   let criteriaCount = 0;
-  if (effectiveSbp >= 130 || dbp.latestValue >= 85) criteriaCount++;
-  if (effectiveGlucose >= 100) criteriaCount++;
-  if (effectiveBmi >= 27) criteriaCount++; // surrogate for waist circumference
-  if (totalChol.observationCount > 0 && totalChol.latestValue > 200) criteriaCount++;
-  if (hdl.observationCount > 0 && hdl.latestValue < 40) criteriaCount++;
+  const metabolicMissing: string[] = [];
+
+  if (sbp.observationCount > 0 && dbp.observationCount > 0) {
+    if (sbp.latestValue >= 130 || dbp.latestValue >= 85) criteriaCount++;
+  } else {
+    metabolicMissing.push('Blood Pressure');
+  }
+
+  if (glucose.observationCount > 0) {
+    if (glucose.latestValue >= 100) criteriaCount++;
+  } else {
+    metabolicMissing.push('Fasting Glucose');
+  }
+
+  if (bmi.observationCount > 0) {
+    if (bmi.latestValue >= 27) criteriaCount++; // surrogate for waist circumference
+  } else {
+    metabolicMissing.push('BMI');
+  }
+
+  if (totalChol.observationCount > 0) {
+    if (totalChol.latestValue > 200) criteriaCount++;
+  } else {
+    metabolicMissing.push('Total Cholesterol');
+  }
+
+  if (hdl.observationCount > 0) {
+    if (hdl.latestValue < 40) criteriaCount++;
+  } else {
+    metabolicMissing.push('HDL Cholesterol');
+  }
 
   const metabolicScorePercent = Number(((criteriaCount / 5) * 100).toFixed(0));
   const metabolicClassification =
@@ -589,8 +656,8 @@ export function evaluateRiskAssessments(
           impactLevel: criteriaCount >= 3 ? 'high' : criteriaCount === 2 ? 'moderate' : 'low'
         }
       ],
-      missingInputs: cvdMissing.length > 0 ? ['Lipid sub-fractions imputed'] : [],
-      dataCompletenessPercent: 85,
+      missingInputs: metabolicMissing,
+      dataCompletenessPercent: metabolicMissing.length === 0 ? 100 : Math.round((1 - metabolicMissing.length / 5) * 100),
       clinicalDisclaimer:
         'Prototype risk calculation designed for comparative what-if scenario tracking.'
     }
@@ -611,10 +678,26 @@ export function runScenarioSimulation(
   const rhr = calculateMetricBaseline(patient.id, 'resting_heart_rate', observations);
   const bmi = calculateMetricBaseline(patient.id, 'bmi', observations);
 
-  const currentSbp = sbp.observationCount > 0 ? sbp.latestValue : 130;
-  const currentGlucose = glucose.observationCount > 0 ? glucose.latestValue : 105;
-  const currentRhr = rhr.observationCount > 0 ? rhr.latestValue : 75;
-  const currentBmi = bmi.observationCount > 0 ? bmi.latestValue : 27.5;
+  // Return "No baseline available" if insufficient data
+  if (sbp.observationCount === 0 && glucose.observationCount === 0 && rhr.observationCount === 0 && bmi.observationCount === 0) {
+    return {
+      scenarioName: 'Personalized Lifestyle Modulation',
+      patientId: patient.id,
+      projectedMetrics: [],
+      projectedRiskChanges: [],
+      evidenceCitations: [
+        {
+          study: 'No Baseline Available',
+          finding: 'Record observations to establish a baseline before running scenario simulations.'
+        }
+      ]
+    };
+  }
+
+  const currentSbp = sbp.observationCount > 0 ? sbp.latestValue : null;
+  const currentGlucose = glucose.observationCount > 0 ? glucose.latestValue : null;
+  const currentRhr = rhr.observationCount > 0 ? rhr.latestValue : null;
+  const currentBmi = bmi.observationCount > 0 ? bmi.latestValue : null;
 
   // 1. Aerobic activity effect (DASH & meta-analyses: 30 min/day yields ~4-6 mmHg SBP drop, -4-6 bpm RHR, -4-8 mg/dL glucose)
   const activityHoursRatio = adjustments.physicalActivityMinutesPerDay / 30; // normalized to 30m increments
@@ -648,63 +731,95 @@ export function runScenarioSimulation(
   const totalRhrDelta = Number((deltaRhrActivity + deltaRhrSleep).toFixed(1));
   const totalBmiDelta = Number(deltaBmi.toFixed(1));
 
-  const simulatedSbp = Math.max(95, Math.round(currentSbp + totalSbpDelta));
-  const simulatedGlucose = Math.max(70, Math.round(currentGlucose + totalGlucoseDelta));
-  const simulatedRhr = Math.max(50, Math.round(currentRhr + totalRhrDelta));
-  const simulatedBmi = Math.max(19, Number((currentBmi + totalBmiDelta).toFixed(1)));
+  const simulatedSbp = currentSbp !== null ? Math.max(95, Math.round(currentSbp + totalSbpDelta)) : null;
+  const simulatedGlucose = currentGlucose !== null ? Math.max(70, Math.round(currentGlucose + totalGlucoseDelta)) : null;
+  const simulatedRhr = currentRhr !== null ? Math.max(50, Math.round(currentRhr + totalRhrDelta)) : null;
+  const simulatedBmi = currentBmi !== null ? Math.max(19, Number((currentBmi + totalBmiDelta).toFixed(1))) : null;
 
-  // Risk improvements
+  // Build projected metrics only for those with baseline data
+  const projectedMetrics = [];
+
+  if (currentSbp !== null) {
+    projectedMetrics.push({
+      metricKey: 'systolic_bp',
+      baselineValue: currentSbp,
+      simulatedValue: simulatedSbp,
+      absoluteDelta: totalSbpDelta,
+      percentDelta: Number(((totalSbpDelta / currentSbp) * 100).toFixed(1)),
+      unit: 'mmHg',
+      clinicalSignificance: totalSbpDelta <= -5 ? 'Clinically meaningful reduction in stroke and cardiovascular event recurrence risk.' : 'Modest hemodynamic improvement.'
+    });
+  }
+
+  if (currentGlucose !== null) {
+    projectedMetrics.push({
+      metricKey: 'fasting_glucose',
+      baselineValue: currentGlucose,
+      simulatedValue: simulatedGlucose,
+      absoluteDelta: totalGlucoseDelta,
+      percentDelta: Number(((totalGlucoseDelta / currentGlucose) * 100).toFixed(1)),
+      unit: 'mg/dL',
+      clinicalSignificance: simulatedGlucose < 100 ? 'Shifts out of impaired fasting glucose zone into optimal reference band.' : 'Reduces chronic glycemic stress.'
+    });
+  }
+
+  if (currentRhr !== null) {
+    projectedMetrics.push({
+      metricKey: 'resting_heart_rate',
+      baselineValue: currentRhr,
+      simulatedValue: simulatedRhr,
+      absoluteDelta: totalRhrDelta,
+      percentDelta: Number(((totalRhrDelta / currentRhr) * 100).toFixed(1)),
+      unit: 'bpm',
+      clinicalSignificance: 'Reflects enhanced parasympathetic vagal tone and myocardial efficiency.'
+    });
+  }
+
+  if (currentBmi !== null) {
+    projectedMetrics.push({
+      metricKey: 'bmi',
+      baselineValue: currentBmi,
+      simulatedValue: simulatedBmi,
+      absoluteDelta: totalBmiDelta,
+      percentDelta: Number(((totalBmiDelta / currentBmi) * 100).toFixed(1)),
+      unit: 'kg/m²',
+      clinicalSignificance: 'Direct reduction in visceral adipose tissue and systemic inflammatory cytokine release.'
+    });
+  }
+
+  // Risk improvements - only if we have baseline risk assessments
   const baseAssessments = evaluateRiskAssessments(patient, observations);
-  const baseCvd = baseAssessments.find((a) => a.assessmentType === 'cardiovascular_10yr')?.scorePercent || 12;
-  const baseT2d = baseAssessments.find((a) => a.assessmentType === 'diabetes_progression')?.scorePercent || 15;
+  const baseCvd = baseAssessments.find((a) => a.assessmentType === 'cardiovascular_10yr')?.scorePercent;
+  const baseT2d = baseAssessments.find((a) => a.assessmentType === 'diabetes_progression')?.scorePercent;
 
-  const cvdRiskReduction = Math.min(40, Math.round(Math.abs(totalSbpDelta) * 2.2 + adjustments.weightReductionKg * 1.5));
-  const projectedCvd = Math.max(2, Number((baseCvd * (1 - cvdRiskReduction / 100)).toFixed(1)));
+  const projectedRiskChanges = [];
 
-  const t2dRiskReduction = Math.min(50, Math.round(Math.abs(totalGlucoseDelta) * 2.5 + adjustments.weightReductionKg * 3.0));
-  const projectedT2d = Math.max(2, Number((baseT2d * (1 - t2dRiskReduction / 100)).toFixed(1)));
+  if (baseCvd !== undefined && baseCvd > 0 && currentSbp !== null) {
+    const cvdRiskReduction = Math.min(40, Math.round(Math.abs(totalSbpDelta) * 2.2 + adjustments.weightReductionKg * 1.5));
+    const projectedCvd = Math.max(2, Number((baseCvd * (1 - cvdRiskReduction / 100)).toFixed(1)));
+    projectedRiskChanges.push({
+      assessmentType: 'Atherosclerotic CVD 10-Yr Proxy',
+      baselineScore: baseCvd,
+      projectedScore: projectedCvd,
+      percentReduction: cvdRiskReduction
+    });
+  }
+
+  if (baseT2d !== undefined && baseT2d > 0 && currentGlucose !== null) {
+    const t2dRiskReduction = Math.min(50, Math.round(Math.abs(totalGlucoseDelta) * 2.5 + adjustments.weightReductionKg * 3.0));
+    const projectedT2d = Math.max(2, Number((baseT2d * (1 - t2dRiskReduction / 100)).toFixed(1)));
+    projectedRiskChanges.push({
+      assessmentType: 'Type 2 Diabetes Progression Index',
+      baselineScore: baseT2d,
+      projectedScore: projectedT2d,
+      percentReduction: t2dRiskReduction
+    });
+  }
 
   return {
     scenarioName: 'Personalized Lifestyle Modulation',
     patientId: patient.id,
-    projectedMetrics: [
-      {
-        metricKey: 'systolic_bp',
-        baselineValue: currentSbp,
-        simulatedValue: simulatedSbp,
-        absoluteDelta: totalSbpDelta,
-        percentDelta: Number(((totalSbpDelta / currentSbp) * 100).toFixed(1)),
-        unit: 'mmHg',
-        clinicalSignificance: totalSbpDelta <= -5 ? 'Clinically meaningful reduction in stroke and cardiovascular event recurrence risk.' : 'Modest hemodynamic improvement.'
-      },
-      {
-        metricKey: 'fasting_glucose',
-        baselineValue: currentGlucose,
-        simulatedValue: simulatedGlucose,
-        absoluteDelta: totalGlucoseDelta,
-        percentDelta: Number(((totalGlucoseDelta / currentGlucose) * 100).toFixed(1)),
-        unit: 'mg/dL',
-        clinicalSignificance: simulatedGlucose < 100 ? 'Shifts out of impaired fasting glucose zone into optimal reference band.' : 'Reduces chronic glycemic stress.'
-      },
-      {
-        metricKey: 'resting_heart_rate',
-        baselineValue: currentRhr,
-        simulatedValue: simulatedRhr,
-        absoluteDelta: totalRhrDelta,
-        percentDelta: Number(((totalRhrDelta / currentRhr) * 100).toFixed(1)),
-        unit: 'bpm',
-        clinicalSignificance: 'Reflects enhanced parasympathetic vagal tone and myocardial efficiency.'
-      },
-      {
-        metricKey: 'bmi',
-        baselineValue: currentBmi,
-        simulatedValue: simulatedBmi,
-        absoluteDelta: totalBmiDelta,
-        percentDelta: Number(((totalBmiDelta / currentBmi) * 100).toFixed(1)),
-        unit: 'kg/m²',
-        clinicalSignificance: 'Direct reduction in visceral adipose tissue and systemic inflammatory cytokine release.'
-      }
-    ],
+    projectedMetrics,
     projectedRiskChanges: [
       {
         assessmentType: 'Atherosclerotic CVD 10-Yr Proxy',

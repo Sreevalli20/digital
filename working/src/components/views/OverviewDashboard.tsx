@@ -87,7 +87,7 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
               Your health, understood over time.
             </h1>
             <p className="text-xs text-slate-500 mt-1">
-              Continuous longitudinal health twin tracking individual physiological baselines, dynamic variance, and hypothetical intervention responses.
+              Track your health measurements over time, establish personal baselines, and explore hypothetical lifestyle scenarios.
             </p>
           </div>
 
@@ -403,24 +403,13 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
 
             <div className="p-3 bg-teal-50/50 rounded border border-teal-100 space-y-2 text-xs">
               <div className="flex items-center justify-between text-teal-950 font-medium">
-                <span>Example Simulation: +30 min Daily Aerobic + DASH Sodium</span>
+                <span>Simulate lifestyle interventions on your baseline</span>
               </div>
-              <div className="grid grid-cols-2 gap-2 text-[11px] text-teal-900/80">
-                <div className="bg-white p-2 rounded border border-teal-100">
-                  <div className="text-slate-500">Projected Systolic BP:</div>
-                  <div className="font-semibold text-teal-900 font-mono">
-                    -5.8 mmHg (to ~124 mmHg)
-                  </div>
-                </div>
-                <div className="bg-white p-2 rounded border border-teal-100">
-                  <div className="text-slate-500">Projected Fasting Glucose:</div>
-                  <div className="font-semibold text-teal-900 font-mono">
-                    -7.0 mg/dL (to ~98 mg/dL)
-                  </div>
-                </div>
-              </div>
+              <p className="text-[11px] text-teal-900/80">
+                Adjust activity, diet, sleep, and weight parameters to estimate potential changes in blood pressure, glucose, and heart rate.
+              </p>
               <p className="text-[10px] text-teal-800/70 pt-1">
-                Grounded in empirical trial outcomes from DASH-Sodium and DPP cohorts.
+                Requires recorded observations to establish a baseline.
               </p>
             </div>
           </div>

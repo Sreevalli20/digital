@@ -34,13 +34,13 @@ export const ScenarioSimulatorView: React.FC<ScenarioSimulatorViewProps> = ({
   patient,
   observations
 }) => {
-  // Scenario state
+  // Scenario state - start with no adjustments (neutral baseline)
   const defaultAdjustments: ScenarioAdjustments = {
-    physicalActivityMinutesPerDay: 30,
-    sodiumReductionMg: 1000,
+    physicalActivityMinutesPerDay: 0,
+    sodiumReductionMg: 0,
     sleepHours: 7.5,
-    weightReductionKg: 3,
-    dietaryGlycemicIndexShift: 'moderate_reduction'
+    weightReductionKg: 0,
+    dietaryGlycemicIndexShift: 'none'
   };
 
   const [adjustments, setAdjustments] = useState<ScenarioAdjustments>(defaultAdjustments);
@@ -81,13 +81,7 @@ export const ScenarioSimulatorView: React.FC<ScenarioSimulatorViewProps> = ({
   }, [patient.id, adjustments, patient, observations]);
 
   const handleReset = () => {
-    setAdjustments({
-      physicalActivityMinutesPerDay: 0,
-      sodiumReductionMg: 0,
-      sleepHours: 6.5,
-      weightReductionKg: 0,
-      dietaryGlycemicIndexShift: 'none'
-    });
+    setAdjustments(defaultAdjustments);
   };
 
   const handleApplyPreset = (preset: 'cardio' | 'metabolic' | 'optimal') => {
@@ -144,10 +138,10 @@ export const ScenarioSimulatorView: React.FC<ScenarioSimulatorViewProps> = ({
         <Info className="w-4 h-4 text-teal-800 shrink-0 mt-0.5" />
         <div>
           <strong className="font-semibold text-slate-900 block mb-0.5">
-            Hypothetical Twin Projection — Research Sandbox
+            Hypothetical Scenario Simulation
           </strong>
           <span>
-            Simulated outcomes are mathematical directional estimates based on clinical trial meta-analyses (DASH, Diabetes Prevention Program, and Look AHEAD). These are hypothetical projections for lifestyle planning, <strong>not guaranteed clinical outcomes or diagnostic prescriptions</strong>. <em>{simulationError ? 'Offline calculation' : 'Server-side Flask scenario engine'} using observed patient data.</em>
+            Simulated outcomes are mathematical directional estimates based on published clinical trial meta-analyses. These are hypothetical projections for lifestyle planning, <strong>not guaranteed clinical outcomes or diagnostic prescriptions</strong>. <em>{simulationError ? 'Offline calculation' : 'Server-side calculation'} using observed patient data.</em>
           </span>
         </div>
       </div>
@@ -375,7 +369,7 @@ export const ScenarioSimulatorView: React.FC<ScenarioSimulatorViewProps> = ({
                 </p>
               </div>
               <span className="text-[11px] font-mono text-teal-800 font-medium">
-                Twin Model v26.1
+                Scenario Engine
               </span>
             </div>
 

@@ -76,23 +76,7 @@ def react_static(path):
 
 @app.route('/')
 def index():
-    """Main dashboard - auto-initialize demo if database is empty."""
-    # Check if database is empty (no patients)
-    patients = patient_repo.get_all()
-    if len(patients) == 0:
-        # Auto-initialize demo with synthetic patient
-        patient = synthetic_generator.generate_patient(is_synthetic=True, use_demo_name=True, external_id="DEMO-001")
-        observations = synthetic_generator.generate_observations(None, days_back=90, daily=True)
-
-        # Save to database
-        created_patient = patient_repo.create(patient)
-
-        # Set patient_id for observations
-        for obs in observations:
-            obs.patient_id = created_patient.id
-
-        created_observations = observation_repo.create_batch(observations)
-
+    """Main dashboard."""
     return render_template('dashboard.html')
 
 

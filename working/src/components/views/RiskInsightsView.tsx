@@ -83,10 +83,10 @@ export const RiskInsightsView: React.FC<RiskInsightsViewProps> = ({
           <Info className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
           <div className="space-y-1">
             <h2 className="font-semibold text-amber-950 text-xs">
-              Methodology & Non-Diagnostic Clinical Limitation Disclosure
+              Screening Tool Disclaimer
             </h2>
             <p className="leading-relaxed text-amber-900/90">
-              The Swasthya Twin risk evaluation engine is a <strong>transparent rules-based screening prototype</strong> designed to observe directional physiological variance over time. It is <strong>not a clinically validated diagnostic tool</strong> or an autonomous machine-learning diagnostic system. All calculations use published epidemiological formulas (ACC/AHA pooled cohorts, ADA screening guidelines, NCEP ATP III) applied strictly to this demo dataset.
+              This risk evaluation is a <strong>rules-based screening prototype</strong> designed to observe directional physiological variance over time. It is <strong>not a clinically validated diagnostic tool</strong>. All calculations use published epidemiological formulas applied to your recorded observations. Consult a healthcare professional for medical advice.
             </p>
           </div>
         </div>

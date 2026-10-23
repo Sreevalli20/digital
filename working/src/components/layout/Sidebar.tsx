@@ -22,8 +22,7 @@ export type NavTabId =
   | 'simulator'
   | 'observations'
   | 'data'
-  | 'reports'
-  | 'project';
+  | 'reports';
 
 interface SidebarProps {
   currentTab: NavTabId;
@@ -48,8 +47,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'simulator' as NavTabId, label: 'Scenario Simulator', icon: Sliders },
     { id: 'observations' as NavTabId, label: 'Observations Log', icon: ClipboardList },
     { id: 'data' as NavTabId, label: 'Data Import & Export', icon: Database },
-    { id: 'reports' as NavTabId, label: 'Evidence & Reports', icon: FileText },
-    { id: 'project' as NavTabId, label: 'Project & Flask Guide', icon: Info }
+    { id: 'reports' as NavTabId, label: 'Evidence & Reports', icon: FileText }
   ];
 
   return (
